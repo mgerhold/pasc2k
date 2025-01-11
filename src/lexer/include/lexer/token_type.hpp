@@ -1,6 +1,8 @@
 #pragma once
 
+#include <format>
 #include <iostream>
+#include <magic_enum.hpp>
 
 // 6.1.2
 enum class TokenType {
@@ -82,3 +84,10 @@ enum class TokenType {
 };
 
 std::ostream& operator<<(std::ostream& os, TokenType type);
+
+template<>
+struct std::formatter<TokenType> : std::formatter<std::string> {
+    auto format(TokenType const type, std::format_context& context) const {
+        return std::formatter<std::string>::format(std::format("{}", magic_enum::enum_name(type)), context);
+    }
+};
