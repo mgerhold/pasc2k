@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cassert>
 #include <lexer/lexer.hpp>
-#include <lexer/lexer_error.hpp>
 #include <limits>
 #include <ranges>
 
