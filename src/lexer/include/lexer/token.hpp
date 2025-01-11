@@ -1,5 +1,6 @@
 #pragma once
 
+#include <format>
 #include "source_location.hpp"
 #include "token_type.hpp"
 
@@ -22,5 +23,21 @@ public:
 
     [[nodiscard]] std::string_view lexeme() const {
         return m_source_location.text();
+    }
+};
+
+template<>
+struct std::formatter<Token> : std::formatter<std::string> {
+    auto format(Token const& token, std::format_context& context) const {
+        switch (token.type()) {
+            case TokenType::Identifier:
+            case TokenType::IntegerNumber:
+            case TokenType::RealNumber:
+            case TokenType::Char:
+            case TokenType::String:
+                return std::formatter<std::string>::format(std::format("{}({})", token.type(), token.lexeme()), context);
+            default:
+                return std::formatter<std::string>::format(std::format("{}", token.type()), context);
+        }
     }
 };
