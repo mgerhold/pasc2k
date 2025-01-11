@@ -6,6 +6,7 @@ add_library(parser
         include/parser/integer_literal.hpp
         include/parser/parser_error.hpp
         include/parser/parser_note.hpp
+        include/parser/constant_definition.hpp
 )
 
 target_include_directories(parser PUBLIC include)
