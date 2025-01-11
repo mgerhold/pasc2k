@@ -12,13 +12,13 @@ enum class TokenType {
     Equals,
     LessThan,
     GreaterThan,
-    LeftSquareBracket, // `[` or `(.` (alternative token)
-    RightSquareBracket, // `]` or `.)` (alternative token)
+    LeftSquareBracket,  // `[` or `(.` (alternative token)
+    RightSquareBracket,  // `]` or `.)` (alternative token)
     Dot,
     Comma,
     Colon,
     Semicolon,
-    UpArrow, // `↑` (not supported) or `^` or `@` (alternative token)
+    UpArrow,  // `↑` (not supported) or `^` or `@` (alternative token)
     LeftParenthesis,
     RightParenthesis,
     LessThanGreaterThan,
