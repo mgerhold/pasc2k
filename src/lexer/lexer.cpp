@@ -307,7 +307,6 @@ private:
         if (current() != '.' and current_upper() != 'E') {
             // Integer.
             emit_token(TokenType::IntegerNumber, start, m_index - start);
-            advance();
             return;
         }
 
