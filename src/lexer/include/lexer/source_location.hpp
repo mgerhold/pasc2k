@@ -61,4 +61,19 @@ public:
     [[nodiscard]] constexpr usize length() const {
         return m_length;
     }
+
+    [[nodiscard]] std::string_view surrounding_line() const {
+        auto line_start = usize{ 0 };
+        for (auto offset = usize{ 0 }; offset < m_offset; ++offset) {
+            if (m_source.at(offset) == '\n') {
+                line_start = offset + 1;
+            }
+        }
+        for (auto offset = m_offset; offset < m_source.size(); ++offset) {
+            if (m_source.at(offset) == '\n') {
+                return std::string_view{ m_source.cbegin() + line_start, m_source.cbegin() + offset };
+            }
+        }
+        return std::string_view{ m_source.cbegin() + line_start, m_source.cend() };
+    }
 };
