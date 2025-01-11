@@ -12,6 +12,11 @@ private:
 protected:
     [[nodiscard]] explicit LexerError(std::string const& message, SourceLocation const& source_location)
         : std::runtime_error{ message }, m_source_location{ source_location } {}
+
+public:
+    [[nodiscard]] SourceLocation const& source_location() const {
+        return m_source_location;
+    }
 };
 
 class NonAsciiCharacter final : public LexerError {
