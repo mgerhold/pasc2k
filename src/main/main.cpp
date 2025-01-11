@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <lexer/lexer.hpp>
+#include <parser/parser.hpp>
 #include <print>
 #include <sstream>
 #include <string_view>
@@ -18,13 +19,14 @@
 
 int main() {
     using namespace std::string_view_literals;
-    static constexpr auto path = "test/factorial.pas"sv;
+    static constexpr auto path = "test/block.pas"sv;
     auto const source = read_file(path);
     try {
-        auto const tokens = tokenize(path, source);
+        auto tokens = tokenize(path, source);
         for (auto const& token : tokens) {
             std::println("{}, {}", token, token.source_location());
         }
+        auto const block = parse(std::move(tokens));
     } catch (std::exception const& e) {
         format_error_to(std::cout, e);
         return EXIT_FAILURE;

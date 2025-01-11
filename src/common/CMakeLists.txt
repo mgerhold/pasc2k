@@ -17,4 +17,5 @@ target_link_system_libraries(common
         INTERFACE
         lib2k
         magic_enum::magic_enum
+        tl::optional
 )

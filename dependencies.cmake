@@ -21,4 +21,14 @@ function(obpf_simulator_setup_dependencies)
             GITHUB_REPOSITORY mgerhold/lib2k
             VERSION 0.1.2
     )
+    CPMAddPackage(
+            NAME TL_OPTIONAL
+            GITHUB_REPOSITORY TartanLlama/optional
+            VERSION 1.1.0
+            OPTIONS
+            "OPTIONAL_BUILD_PACKAGE OFF"
+            "OPTIONAL_BUILD_TESTS OFF"
+            "OPTIONAL_BUILD_PACKAGE_DEB OFF"
+            "BUILD_SHARED_LIBS OFF"
+    )
 endfunction()

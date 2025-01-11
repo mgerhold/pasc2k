@@ -8,6 +8,7 @@ target_include_directories(diagnostics PUBLIC include)
 
 target_link_libraries(diagnostics
         PUBLIC
-        lexer
         common
+        lexer
+        parser
 )
