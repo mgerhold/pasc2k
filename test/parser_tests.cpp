@@ -3,12 +3,12 @@
 #include <parser/block.hpp>
 #include <parser/parser.hpp>
 
-[[nodiscard]] static Block parse(std::string_view const source) {
+[[nodiscard]] static Ast parse(std::string_view const source) {
     auto tokens = tokenize("test", source);
-    auto block = parse(std::move(tokens));
-    return block;
+    auto ast = parse(std::move(tokens));
+    return ast;
 }
 
 TEST(ParserTests, Test) {
-    auto block = parse("");
+    auto ast = parse("");
 }

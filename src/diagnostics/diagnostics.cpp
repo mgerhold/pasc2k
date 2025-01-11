@@ -12,32 +12,33 @@ enum class DiagnosticsType {
 };
 
 static void format_source_location_to(std::ostream& stream, SourceLocation const& source_location) {
-    auto const [line, column] = source_location.position();
-    std::print(stream, "{}:{}:{}: ", source_location.path(), line, column);
+    auto const [start_line, start_column, end_line, end_column] = source_location.position();
+    std::print(stream, "{}:{}:{}: ", source_location.path(), start_line, start_column);
 }
 
 static void format_line_to(std::ostream& stream, SourceLocation const& source_location, bool const use_color) {
-    auto const [line, column] = source_location.position();
+    auto const [start_line, start_column, end_line, end_column] = source_location.position();
     if (use_color) {
         set_text_color(TextColor::White);
     }
-    std::print(stream, "{:5}", line);
+    std::print(stream, "{:5}", start_line);
     if (use_color) {
         reset_colors();
     }
-    std::println(stream, " | {}", source_location.surrounding_line());
+    // TODO: Handle multiple lines.
+    std::println(stream, " | {}", source_location.surrounding_lines().front());
     std::print(stream, "      |");
     if (use_color) {
         set_text_color(TextColor::Green);
     }
-    std::print(stream, "{:>{}}^", "", column);
+    std::print(stream, "{:>{}}^", "", start_column);
     if (source_location.length() > 1) {
         std::print(stream, "{:~>{}}", "", source_location.length() - 1);
     }
     if (use_color) {
         reset_colors();
     }
-    std::println();
+    std::print("\n");
 }
 
 [[nodiscard]] static TextColor color(DiagnosticsType const type) {

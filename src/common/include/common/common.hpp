@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <lib2k/types.hpp>
 #include <ranges>
 #include <stdexcept>

@@ -3,6 +3,6 @@
 #include <lexer/token.hpp>
 #include <parser/parser_error.hpp>
 #include <vector>
-#include "block.hpp"
+#include "ast.hpp"
 
-[[nodiscard]] Block parse(std::vector<Token>&& tokens);
+[[nodiscard]] Ast parse(std::vector<Token>&& tokens);

@@ -2,39 +2,163 @@
 
 #include <lexer/token.hpp>
 #include <lib2k/types.hpp>
+#include <memory>
+#include <tl/optional.hpp>
 #include <variant>
+#include "ast_node.hpp"
+#include "literals.hpp"
 
-struct ConstantReference final {
-    enum class Sign {
-        Positive,
-        Negative,
-        None,
-    };
+class ConstantDefinition : public AstNode {
+protected:
+    Token const* m_identifier;
 
-    Sign sign;
-    Token const* identifier;
+protected:
+    [[nodiscard]] explicit ConstantDefinition(Token const& identifier)
+        : m_identifier{ &identifier } {}
 
-    [[nodiscard]] ConstantReference(Sign const sign, Token const& identifier)
-        : sign{ sign }, identifier{ &identifier } {}
+public:
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_identifier->source_location();
+    }
 };
 
-class ConstantDefinition final {
-public:
-    using Constant = std::variant<i64, double, char, std::string, ConstantReference>;
-
+class IntegerConstant final : public ConstantDefinition {
 private:
-    Token const* m_identifier;
-    Constant m_constant;
+    IntegerLiteral m_integer_literal;
 
 public:
-    [[nodiscard]] explicit ConstantDefinition(Token const& identifier, Constant const& constant)
-        : m_identifier{ &identifier }, m_constant{ constant } {}
+    [[nodiscard]] explicit IntegerConstant(Token const& identifier, IntegerLiteral const& integer_literal)
+        : ConstantDefinition{ identifier }, m_integer_literal{ integer_literal } {}
 
-    [[nodiscard]] Token const& identifier() const {
-        return *m_identifier;
+    [[nodiscard]] IntegerLiteral const& integer_literal() const {
+        return m_integer_literal;
     }
 
-    [[nodiscard]] Constant const& constant() const {
-        return m_constant;
+    [[nodiscard]] SourceLocation source_location() const override {
+        return ConstantDefinition::source_location().join(integer_literal().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        print_ast_node(context, "IntegerConstant", std::format("'{}'", m_identifier->lexeme()));
+        context.begin_children(true);
+        integer_literal().print(context);
+        context.end_children();
+    }
+};
+
+class RealConstant final : public ConstantDefinition {
+private:
+    RealLiteral m_real_literal;
+
+public:
+    [[nodiscard]] explicit RealConstant(Token const& identifier, RealLiteral const& real_literal)
+        : ConstantDefinition{ identifier }, m_real_literal{ real_literal } {}
+
+    [[nodiscard]] RealLiteral const& real_literal() const {
+        return m_real_literal;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return ConstantDefinition::source_location().join(real_literal().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        print_ast_node(context, "RealConstant", std::format("'{}'", m_identifier->lexeme()));
+        context.begin_children(true);
+        real_literal().print(context);
+        context.end_children();
+    }
+};
+
+class CharConstant final : public ConstantDefinition {
+private:
+    CharLiteral m_char_literal;
+
+public:
+    [[nodiscard]] explicit CharConstant(Token const& identifier, CharLiteral const& char_literal)
+        : ConstantDefinition{ identifier }, m_char_literal{ char_literal } {}
+
+    [[nodiscard]] CharLiteral const& char_literal() const {
+        return m_char_literal;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return ConstantDefinition::source_location().join(char_literal().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        print_ast_node(context, "CharConstant", std::format("'{}'", m_identifier->lexeme()));
+        context.begin_children(true);
+        char_literal().print(context);
+        context.end_children();
+    }
+};
+
+class StringConstant final : public ConstantDefinition {
+private:
+    StringLiteral m_string_literal;
+
+public:
+    [[nodiscard]] explicit StringConstant(Token const& identifier, StringLiteral const& string_literal)
+        : ConstantDefinition{ identifier }, m_string_literal{ string_literal } {}
+
+    [[nodiscard]] StringLiteral const& string_literal() const {
+        return m_string_literal;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return ConstantDefinition::source_location().join(string_literal().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        print_ast_node(context, "StringConstant", std::format("'{}'", m_identifier->lexeme()));
+        context.begin_children(true);
+        string_literal().print(context);
+        context.end_children();
+    }
+};
+
+class ConstantReference final : public ConstantDefinition {
+private:
+    tl::optional<Token const&> m_sign;
+    Token const* m_referenced_constant;
+
+public:
+    [[nodiscard]] explicit ConstantReference(
+        Token const& identifier,
+        tl::optional<Token const&> const& sign,
+        Token const& referenced_constant
+    )
+        : ConstantDefinition{ identifier }, m_sign{ sign }, m_referenced_constant{ &referenced_constant } {}
+
+    [[nodiscard]] tl::optional<Token const&> const& sign() const {
+        return m_sign;
+    }
+
+    [[nodiscard]] Token const& referenced_constant() const {
+        return *m_referenced_constant;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return ConstantDefinition::source_location().join(referenced_constant().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        if (m_sign.has_value()) {
+            print_ast_node(
+                context,
+                "ConstantReference",
+                std::format("'{}'", m_identifier->lexeme()),
+                std::format("'{}'", sign().value().lexeme()),
+                std::format("'{}'", referenced_constant().lexeme())
+            );
+        } else {
+            print_ast_node(
+                context,
+                "ConstantReference",
+                std::format("'{}'", m_identifier->lexeme()),
+                std::format("'{}'", referenced_constant().lexeme())
+            );
+        }
     }
 };

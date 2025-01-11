@@ -22,11 +22,8 @@ int main() {
     static constexpr auto path = "test/block.pas"sv;
     auto const source = read_file(path);
     try {
-        auto tokens = tokenize(path, source);
-        for (auto const& token : tokens) {
-            std::println("{}, {}", token, token.source_location());
-        }
-        auto const block = parse(std::move(tokens));
+        auto const ast = parse(tokenize(path, source));
+        ast.print();
     } catch (std::exception const& e) {
         format_error_to(std::cout, e);
         return EXIT_FAILURE;

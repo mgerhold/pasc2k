@@ -433,35 +433,35 @@ end.)"sv;
 
     // No uniform initialization for SourceLocation::Position, because it won't work inside the macro.
     EXPECT_EQ(tokens.at(0).type(), TokenType::Begin);
-    EXPECT_EQ(tokens.at(0).source_location().position(), SourceLocation::Position(1, 1));
+    EXPECT_EQ(tokens.at(0).source_location().position(), SourceLocation::Position(1, 1, 1, 6));
     EXPECT_EQ(tokens.at(0).source_location().length(), 5);
 
     EXPECT_EQ(tokens.at(1).type(), TokenType::Identifier);
     EXPECT_EQ(tokens.at(1).lexeme(), "writeln");
-    EXPECT_EQ(tokens.at(1).source_location().position(), SourceLocation::Position(2, 5));
+    EXPECT_EQ(tokens.at(1).source_location().position(), SourceLocation::Position(2, 5, 2, 11));
     EXPECT_EQ(tokens.at(1).source_location().length(), 7);
 
     EXPECT_EQ(tokens.at(2).type(), TokenType::LeftParenthesis);
-    EXPECT_EQ(tokens.at(2).source_location().position(), SourceLocation::Position(2, 12));
+    EXPECT_EQ(tokens.at(2).source_location().position(), SourceLocation::Position(2, 12, 2, 12));
     EXPECT_EQ(tokens.at(2).source_location().length(), 1);
 
     EXPECT_EQ(tokens.at(3).type(), TokenType::String);
-    EXPECT_EQ(tokens.at(3).source_location().position(), SourceLocation::Position(2, 13));
+    EXPECT_EQ(tokens.at(3).source_location().position(), SourceLocation::Position(2, 13, 2, 28));
     EXPECT_EQ(tokens.at(3).source_location().length(), 15);
 
     EXPECT_EQ(tokens.at(4).type(), TokenType::RightParenthesis);
-    EXPECT_EQ(tokens.at(4).source_location().position(), SourceLocation::Position(2, 28));
+    EXPECT_EQ(tokens.at(4).source_location().position(), SourceLocation::Position(2, 28, 2, 28));
     EXPECT_EQ(tokens.at(4).source_location().length(), 1);
 
     EXPECT_EQ(tokens.at(5).type(), TokenType::Semicolon);
-    EXPECT_EQ(tokens.at(5).source_location().position(), SourceLocation::Position(2, 29));
+    EXPECT_EQ(tokens.at(5).source_location().position(), SourceLocation::Position(2, 29, 2, 29));
     EXPECT_EQ(tokens.at(5).source_location().length(), 1);
 
     EXPECT_EQ(tokens.at(6).type(), TokenType::End);
-    EXPECT_EQ(tokens.at(6).source_location().position(), SourceLocation::Position(3, 1));
+    EXPECT_EQ(tokens.at(6).source_location().position(), SourceLocation::Position(3, 1, 3, 4));
     EXPECT_EQ(tokens.at(6).source_location().length(), 3);
 
     EXPECT_EQ(tokens.at(7).type(), TokenType::Dot);
-    EXPECT_EQ(tokens.at(7).source_location().position(), SourceLocation::Position(3, 4));
+    EXPECT_EQ(tokens.at(7).source_location().position(), SourceLocation::Position(3, 4, 3, 4));
     EXPECT_EQ(tokens.at(7).source_location().length(), 1);
 }

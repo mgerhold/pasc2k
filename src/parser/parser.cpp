@@ -3,6 +3,7 @@
 #include <parser/constant_definition.hpp>
 #include <parser/parser.hpp>
 #include <parser/parser_note.hpp>
+#include <parser/type_definition.hpp>
 #include <sstream>
 #include <tl/optional.hpp>
 
@@ -18,28 +19,29 @@ public:
         assert(m_tokens.back().type() == TokenType::EndOfFile);
     }
 
-    [[nodiscard]] Block parse() & = delete;
+    [[nodiscard]] Ast parse() & = delete;
 
-    [[nodiscard]] Block parse() && {
-        auto label_declarations = this->label_declarations();
-        auto constant_definitions = this->constant_definitions();
-        return Block{
+    [[nodiscard]] Ast parse() && {
+        auto label_declarations =
+            current_is(TokenType::Label) ? std::optional{ this->label_declarations() } : std::nullopt;
+        auto constant_definitions =
+            current_is(TokenType::Const) ? std::optional{ this->constant_definitions() } : std::nullopt;
+        return Ast{
             std::move(m_tokens),
-            std::move(label_declarations),
-            std::move(constant_definitions),
+            Block{
+                  std::move(label_declarations),
+                  std::move(constant_definitions),
+                  }
         };
     }
 
 private:
-    [[nodiscard]] std::vector<LabelDeclaration> label_declarations() {
-        auto const label_token = match(TokenType::Label);
-        if (not label_token.has_value()) {
-            return {};
-        }
+    [[nodiscard]] LabelDeclarations label_declarations() {
+        auto const& label_token = expect(TokenType::Label, "Expected label.");
 
         auto const create_notes = [&] {
             return std::vector{
-                ParserNote{ label_token.value().source_location(), "In label declarations starting from here." }
+                ParserNote{ label_token.source_location(), "In label declarations starting from here." }
             };
         };
 
@@ -49,7 +51,7 @@ private:
             declarations.push_back(label(create_notes));
         }
         expect(TokenType::Semicolon, "Expected semicolon after label declarations.", create_notes());
-        return declarations;
+        return LabelDeclarations{ label_token, declarations };
     }
 
     [[nodiscard]] LabelDeclaration label(auto const& create_notes) {
@@ -58,83 +60,153 @@ private:
         if (not std::isdigit(static_cast<unsigned char>(token.lexeme().at(0)))) {
             throw ParserError{ "Expected label", token.source_location(), create_notes() };
         }
-        auto const parsed = c2k::parse<i64>(token.lexeme());
-        if (not parsed.has_value() or parsed.value() > 9999) {
-            throw ParserError{ "Label value out of bounds (0 to 9999)", token.source_location(), create_notes() };
-        }
-        return LabelDeclaration{ parsed.value() };
+        return LabelDeclaration{ IntegerLiteral{ token } };
     }
 
-    [[nodiscard]] std::vector<ConstantDefinition> constant_definitions() {
-        auto const const_token = match(TokenType::Const);
-        if (not const_token.has_value()) {
-            return {};
-        }
-
+    [[nodiscard]] ConstantDefinitions constant_definitions() {
+        auto const& const_token = expect(TokenType::Const, "Expected const.");
         auto const create_notes = [&] {
             return std::vector{
-                ParserNote{ const_token.value().source_location(), "In constant definitions starting from here." }
+                ParserNote{ const_token.source_location(), "In constant definitions starting from here." }
             };
         };
 
-        auto definitions = std::vector<ConstantDefinition>{};
+        auto definitions = std::vector<std::unique_ptr<ConstantDefinition>>{};
         definitions.push_back(constant_definition(create_notes));
         expect(TokenType::Semicolon, "Expected semicolon after constant definition.", create_notes());
         while (current_is(TokenType::Identifier)) {
             definitions.push_back(constant_definition(create_notes));
             expect(TokenType::Semicolon, "Expected semicolon after constant definition.", create_notes());
         }
-        return definitions;
+        return ConstantDefinitions{ const_token, std::move(definitions) };
     }
 
-    [[nodiscard]] ConstantDefinition constant_definition(auto const& create_notes) {
+    [[nodiscard]] std::unique_ptr<ConstantDefinition> constant_definition(auto const& create_notes) {
         auto const& identifier =
             expect(TokenType::Identifier, "Expected identifier in constant definition.", create_notes());
 
         expect(TokenType::Equals, "Expected equals sign in constant definition.", create_notes());
 
         if (auto const integer_token = match(TokenType::IntegerNumber)) {
-            auto const number = c2k::parse<i64>(integer_token.value().lexeme());
-            if (not number.has_value()) {
-                throw ParserError{
-                    "Integer constant out of range.",
-                    integer_token.value().source_location(),
-                    create_notes(),
-                };
-            }
-            return ConstantDefinition{ identifier, number.value() };
+            return std::make_unique<IntegerConstant>(identifier, IntegerLiteral{ integer_token.value() });
         }
         if (auto const real_token = match(TokenType::RealNumber)) {
-            return ConstantDefinition{ identifier, extract_real_number(real_token.value()) };
+            return std::make_unique<RealConstant>(identifier, RealLiteral{ real_token.value() });
         }
         if (auto const char_token = match(TokenType::Char)) {
-            return ConstantDefinition{ identifier, extract_char(char_token.value()) };
+            return std::make_unique<CharConstant>(identifier, CharLiteral{ char_token.value() });
         }
         if (auto const string_token = match(TokenType::String)) {
-            return ConstantDefinition{ identifier, extract_string(string_token.value()) };
+            return std::make_unique<StringConstant>(identifier, StringLiteral{ string_token.value() });
         }
 
-        auto const sign = [&] {
-            if (match(TokenType::Plus)) {
-                return ConstantReference::Sign::Positive;
+        auto const sign = [&]() -> tl::optional<Token const&> {
+            if (auto const plus_token = match(TokenType::Plus)) {
+                return plus_token.value();
             }
-            if (match(TokenType::Minus)) {
-                return ConstantReference::Sign::Negative;
+            if (auto const minus_token = match(TokenType::Minus)) {
+                return minus_token.value();
             }
-            return ConstantReference::Sign::None;
+            return tl::nullopt;
         }();
 
         if (auto const identifier_token = match(TokenType::Identifier)) {
-            return ConstantDefinition{
-                identifier,
-                ConstantReference{ sign, identifier_token.value() }
-            };
+            return std::make_unique<ConstantReference>(identifier, sign, identifier_token.value());
         }
         throw ParserError{
             "Expected constant value in constant definition.",
             current().source_location(),
             create_notes(),
         };
+    }
+
+    [[nodiscard]] std::vector<TypeDefinition> type_definitions() {
+        auto const type_token = match(TokenType::Type);
+        if (not type_token.has_value()) {
+            return {};
+        }
+
+        auto const create_notes = [&] {
+            return std::vector{
+                ParserNote{
+                           type_token.value().source_location(),
+                           "In type definitions starting from here.", }
+            };
+        };
+
+        auto definitions = std::vector<TypeDefinition>{};
+        definitions.push_back(type_definition(create_notes));
+        expect(TokenType::Semicolon, "Expected semicolon after type definition.", create_notes());
+        while (current_is(TokenType::Identifier)) {
+            definitions.push_back(type_definition(create_notes));
+            expect(TokenType::Semicolon, "Expected semicolon after type definition.", create_notes());
+        }
+        return definitions;
+    }
+
+    [[nodiscard]] TypeDefinition type_definition(auto const& create_notes) {
+        auto const& identifier =
+            expect(TokenType::Identifier, "Expected identifier in type definition.", create_notes());
+
+        expect(TokenType::Identifier, "Expected equals sign in type definition.", create_notes());
+
+        return TypeDefinition{ identifier, type() };
+    }
+
+    [[nodiscard]] std::unique_ptr<Type> type() {
+        if (auto const identifier_token = match(TokenType::Identifier)) {
+            // Built-in types.
+            if (equals_case_insensitive(identifier_token.value().lexeme(), "INTEGER")) {
+                return std::make_unique<IntegerType>();
+            }
+            if (equals_case_insensitive(identifier_token.value().lexeme(), "REAL")) {
+                return std::make_unique<RealType>();
+            }
+            if (equals_case_insensitive(identifier_token.value().lexeme(), "BOOLEAN")) {
+                return std::make_unique<BooleanType>();
+            }
+            if (equals_case_insensitive(identifier_token.value().lexeme(), "CHAR")) {
+                return std::make_unique<CharType>();
+            }
+
+            if (match(TokenType::DotDot)) {
+                // Enumerated subrange type.
+                auto const subrange_to =
+                    expect(TokenType::Identifier, "Expected identifier in enumerated subrange type.");
+                return std::make_unique<EnumeratedSubrangeType>(identifier_token.value(), subrange_to);
+            }
+            // Type identifier.
+            return std::make_unique<TypeIdentifierType>(identifier_token.value());
+        }
+
+        if (match(TokenType::LeftParenthesis)) {
+            // Enumerated type.
+            auto identifiers = std::vector<Token const*>{};
+            identifiers.push_back(&expect(TokenType::Identifier, "Expected identifier in enumerated type."));
+            while (match(TokenType::Comma)) {
+                identifiers.push_back(&expect(TokenType::Identifier, "Expected identifier in enumerated type."));
+            }
+            expect(TokenType::RightParenthesis, "Expected right parenthesis to terminated enumerated type definition.");
+            return std::make_unique<EnumeratedType>(std::move(identifiers));
+        }
+
+        if (auto const integer_token = match(TokenType::IntegerNumber)) {
+            // Integer subrange type.
+            auto const from = c2k::parse<i64>(integer_token.value().lexeme());
+            if (not from.has_value()) {
+                throw ParserError{ "Integer subrange type from value out of range.",
+                                   integer_token.value().source_location() };
+            }
+            expect(TokenType::DotDot, "Expected dot dot in integer subrange type.");
+            auto const to_token = expect(TokenType::IntegerNumber, "Expected integer number in integer subrange type.");
+            auto const to = c2k::parse<i64>(to_token.lexeme());
+            if (not to.has_value()) {
+                throw ParserError{ "Integer subrange type to value out of range.", to_token.source_location() };
+            }
+            return std::make_unique<IntegerSubrangeType>(from.value(), to.value());
+        }
+
+        throw InternalCompilerError{ "Not implemented." };
     }
 
     [[nodiscard]] bool is_at_end() const {
@@ -180,52 +252,8 @@ private:
             m_index++;
         }
     }
-
-    [[nodiscard]] static double extract_real_number(Token const& token) {
-        if (token.type() != TokenType::RealNumber) {
-            throw InternalCompilerError{ "Expected real number." };
-        }
-        auto stream = std::istringstream{ std::string{ token.lexeme() } };
-        auto result = 0.0;
-        stream >> result;
-        if (not stream.eof()) {
-            throw InternalCompilerError{ "Failed to parse real number." };
-        }
-        return result;
-    }
-
-    [[nodiscard]] static char extract_char(Token const& token) {
-        if (token.type() != TokenType::Char) {
-            throw InternalCompilerError{ "Expected character." };
-        }
-        if (token.lexeme().length() > 3) {
-            if (token.lexeme().at(1) != '\'' or token.lexeme().at(2) != '\'' or token.lexeme().length() != 4) {
-                throw InternalCompilerError{ "Invalid character literal." };
-            }
-            return '\'';
-        }
-        if (token.lexeme().length() != 3) {
-            throw InternalCompilerError{ "Invalid character literal." };
-        }
-        return token.lexeme().at(1);
-    }
-
-    [[nodiscard]] static std::string extract_string(Token const& token) {
-        auto result = std::string{};
-        auto const lexeme = token.lexeme();
-        for (auto i = usize{ 1 }; i < lexeme.length() - 1;) {
-            if (lexeme.at(i) == '\'' and lexeme.at(i + 1) == '\'') {
-                result += '\'';
-                i += 2;
-            } else {
-                result += lexeme.at(i);
-                ++i;
-            }
-        }
-        return result;
-    }
 };
 
-[[nodiscard]] Block parse(std::vector<Token>&& tokens) {
+[[nodiscard]] Ast parse(std::vector<Token>&& tokens) {
     return Parser{ std::move(tokens) }.parse();
 }
