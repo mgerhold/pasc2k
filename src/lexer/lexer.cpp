@@ -176,7 +176,7 @@ public:
                         continue;
                     }
                     if (not is_letter(current_upper())) {
-                        throw InvalidCharacter{ current_source_location(), current(), "letter (a-z|A-Z)" };
+                        throw InvalidCharacter{ current_source_location(), current(), "number, word symbol, or identifier" };
                     }
                     word_symbol_or_identifier();
                     break;

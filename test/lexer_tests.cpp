@@ -242,7 +242,7 @@ TEST(LexerTests, InvalidCharacter_Throws) {
             try {
                 tokenize(source);
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got '!', expected letter (a-z|A-Z)");
+                EXPECT_STREQ(e.what(), "Invalid character: Got '!', expected number, word symbol, or identifier");
                 throw;
             }
         },
