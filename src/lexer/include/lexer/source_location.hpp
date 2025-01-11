@@ -4,6 +4,7 @@
 
 class SourceLocation final {
     friend class Lexer;
+
 public:
     struct Position final {
         usize line;
