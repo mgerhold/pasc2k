@@ -77,3 +77,11 @@ public:
         return std::string_view{ m_source.cbegin() + line_start, m_source.cend() };
     }
 };
+
+template<>
+struct std::formatter<SourceLocation> : std::formatter<std::string> {
+    auto format(SourceLocation const& source_location, std::format_context& context) const {
+        auto const [line, column] = source_location.position();
+        return std::formatter<std::string>::format(std::format("{}:{}:{}", source_location.path(), line, column), context);
+    }
+};
