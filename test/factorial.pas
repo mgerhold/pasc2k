@@ -37,5 +37,5 @@ begin
   end;
 
   { Free the allocated memory }
-  Dispose(result);!
+  Dispose(result);
 end.
