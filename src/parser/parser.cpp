@@ -6,12 +6,6 @@
 #include <sstream>
 #include <tl/optional.hpp>
 
-enum class Sign {
-    Positive,
-    Negative,
-    None,
-};
-
 class Parser final {
 private:
     std::vector<Token> m_tokens;
@@ -84,19 +78,16 @@ private:
         };
 
         auto definitions = std::vector<ConstantDefinition>{};
-        definitions.push_back(constant_definition(create_notes, definitions));
+        definitions.push_back(constant_definition(create_notes));
         expect(TokenType::Semicolon, "Expected semicolon after constant definition.", create_notes());
         while (current_is(TokenType::Identifier)) {
-            definitions.push_back(constant_definition(create_notes, definitions));
+            definitions.push_back(constant_definition(create_notes));
             expect(TokenType::Semicolon, "Expected semicolon after constant definition.", create_notes());
         }
         return definitions;
     }
 
-    [[nodiscard]] ConstantDefinition constant_definition(
-        auto const& create_notes,
-        std::vector<ConstantDefinition> const& previous_definitions
-    ) {
+    [[nodiscard]] ConstantDefinition constant_definition(auto const& create_notes) {
         auto const& identifier =
             expect(TokenType::Identifier, "Expected identifier in constant definition.", create_notes());
 
@@ -125,45 +116,19 @@ private:
 
         auto const sign = [&] {
             if (match(TokenType::Plus)) {
-                return Sign::Positive;
+                return ConstantReference::Sign::Positive;
             }
             if (match(TokenType::Minus)) {
-                return Sign::Negative;
+                return ConstantReference::Sign::Negative;
             }
-            return Sign::None;
+            return ConstantReference::Sign::None;
         }();
 
         if (auto const identifier_token = match(TokenType::Identifier)) {
-            auto const reference = std::ranges::find_if(previous_definitions, [&](auto const& definition) {
-                return equals_case_insensitive(definition.identifier().lexeme(), identifier_token.value().lexeme());
-            });
-            if (reference == previous_definitions.cend()) {
-                throw ParserError{
-                    "Trying to reference undefined constant.",
-                    identifier_token.value().source_location(),
-                    create_notes(),
-                };
-            }
-            if (sign == Sign::None) {
-                // We just copy the constant's value.
-                return ConstantDefinition{ identifier, reference->constant() };
-            }
-            auto const is_int = std::holds_alternative<i64>(reference->constant());
-            auto const is_real = std::holds_alternative<double>(reference->constant());
-            if (not is_int and not is_real) {
-                throw ParserError{
-                    "Expected reference to integer or real constant.",
-                    identifier_token.value().source_location(),
-                    create_notes(),
-                };
-            }
-            if (sign == Sign::Positive) {
-                return ConstantDefinition{ identifier, reference->constant() };
-            }
-            if (is_int) {
-                return ConstantDefinition{ identifier, -std::get<i64>(reference->constant()) };
-            }
-            return ConstantDefinition{ identifier, -std::get<double>(reference->constant()) };
+            return ConstantDefinition{
+                identifier,
+                ConstantReference{ sign, identifier_token.value() }
+            };
         }
         throw ParserError{
             "Expected constant value in constant definition.",

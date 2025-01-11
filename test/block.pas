@@ -11,4 +11,4 @@ const
     H = '!';
     I = '''';
     J = 'Test';
-    MyValue = J;
+    MyValue = -DoesNotExist;

@@ -4,9 +4,23 @@
 #include <lib2k/types.hpp>
 #include <variant>
 
+struct ConstantReference final {
+    enum class Sign {
+        Positive,
+        Negative,
+        None,
+    };
+
+    Sign sign;
+    Token const* identifier;
+
+    [[nodiscard]] ConstantReference(Sign const sign, Token const& identifier)
+        : sign{ sign }, identifier{ &identifier } {}
+};
+
 class ConstantDefinition final {
 public:
-    using Constant = std::variant<i64, double, char, std::string>;
+    using Constant = std::variant<i64, double, char, std::string, ConstantReference>;
 
 private:
     Token const* m_identifier;
