@@ -1,56 +1,27 @@
 #include <diagnostics/diagnostics.hpp>
+#include <filesystem>
+#include <fstream>
 #include <lexer/lexer.hpp>
-#include <string_view>
 #include <print>
+#include <sstream>
+#include <string_view>
+
+[[nodiscard]] std::string read_file(std::filesystem::path const& path) {
+    auto file = std::ifstream{ path };
+    auto stream = std::ostringstream{};
+    stream << file.rdbuf();
+    if (not file) {
+        throw std::runtime_error{ "Failed to read file" };
+    }
+    return std::move(stream).str();
+}
 
 int main() {
     using namespace std::string_view_literals;
-
-    static constexpr auto source = R"(program ISO7185Demo;
-
-type
-  PInteger = ^Integer;  { Define a pointer type for integers }
-
-{ Function to calculate factorial using recursion }
-function Factorial(n: Integer): Integer;
-begin
-  if n = 0 then
-    Factorial := 1
-  else
-    Factorial := n * Factorial(n - 1);
-end;
-
-var
-  number: Integer;      { Variable to store user input }
-  result: PInteger;     { Pointer to store the result }
-
-begin
-  { Dynamically allocate memory for the result }
-  New(result);
-
-  { Prompt user for input }
-  Write('Enter a number to calculate its factorial: ');
-  ReadLn(number);
-
-  { Ensure the number is non-negative }
-  if number < 0 then
-    WriteLn('Factorial is not defined for negative numbers.')
-  else
-  begin
-    { Calculate factorial and store it in dynamically allocated memory }
-    result^ := Factorial(number);
-
-    { Display the result }
-    WriteLn('The factorial of ', number, ' is: ', result^);
-  end;
-
-  { Free the allocated memory }
-  Dispose(result);!
-end.
-)";
-
+    static constexpr auto path = "test/factorial.pas"sv;
+    auto const source = read_file(path);
     try {
-        auto const tokens = tokenize("stdin"sv, source);
+        auto const tokens = tokenize(path, source);
         for (auto const& token : tokens) {
             std::println("{}, {}", token, token.source_location());
         }
