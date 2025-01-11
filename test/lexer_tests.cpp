@@ -242,11 +242,11 @@ TEST(LexerTests, InvalidCharacter_Throws) {
             try {
                 tokenize(source);
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got '!', expected number, word symbol, or identifier");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got '!', expected number, word symbol, or identifier");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
 }
 
@@ -278,33 +278,33 @@ TEST(LexerTests, InvalidNumbers_Throws) {
             try {
                 tokenize("1e");
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got non-printable character #0, expected digit");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got non-printable character #0, expected digit");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
     EXPECT_THROW(
         {
             try {
                 tokenize("1.");
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got non-printable character #0, expected digit");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got non-printable character #0, expected digit");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
     EXPECT_THROW(
         {
             try {
                 tokenize("1.!");
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got '!', expected digit");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got '!', expected digit");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
 }
 
@@ -336,11 +336,11 @@ TEST(LexerTests, InvalidCharLiteral_Throws) {
             try {
                 tokenize("'\t'");
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got non-printable character #9, expected string character");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got non-printable character #9, expected string character");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
 }
 
@@ -366,11 +366,11 @@ TEST(LexerTests, StringLiteral_Throws) {
             try {
                 tokenize("'Abc\t'");
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got non-printable character #9, expected string character");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got non-printable character #9, expected string character");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
 }
 
@@ -390,11 +390,11 @@ TEST(LexerTests, MissingTokenSeparator_Throws) {
             try {
                 tokenize("3abc");
             } catch (std::runtime_error const& e) {
-                EXPECT_STREQ(e.what(), "Invalid character: Got 'a', expected token separator");
+                EXPECT_STREQ(e.what(), "Unexpected character: Got 'a', expected token separator");
                 throw;
             }
         },
-        InvalidCharacter
+        UnexpectedCharacter
     );
 }
 

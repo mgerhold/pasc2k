@@ -176,7 +176,7 @@ public:
                         continue;
                     }
                     if (not is_letter(current_upper())) {
-                        throw InvalidCharacter{ current_source_location(), current(), "number, word symbol, or identifier" };
+                        throw UnexpectedCharacter{ current_source_location(), current(), "number, word symbol, or identifier" };
                     }
                     word_symbol_or_identifier();
                     break;
@@ -275,7 +275,7 @@ private:
                                                              previous_token.source_location().m_offset
                                                                  + previous_token.source_location().length(),
                                                              1 };
-                throw InvalidCharacter{ source_location, source_location.text().front(), "token separator" };
+                throw UnexpectedCharacter{ source_location, source_location.text().front(), "token separator" };
             }
         }
         m_tokens.emplace_back(token);
@@ -316,7 +316,7 @@ private:
             // Fractional part (digit sequence, optional).
             advance();
             if (not is_digit(current())) {
-                throw InvalidCharacter{ current_source_location(), current(), "digit" };
+                throw UnexpectedCharacter{ current_source_location(), current(), "digit" };
             }
             while (is_digit(current())) {
                 advance();
@@ -330,7 +330,7 @@ private:
                 advance();
             }
             if (not is_digit(current())) {
-                throw InvalidCharacter{ current_source_location(), current(), "digit" };
+                throw UnexpectedCharacter{ current_source_location(), current(), "digit" };
             }
             while (is_digit(current())) {
                 advance();
@@ -444,7 +444,7 @@ private:
                 break;
             }
             if (not is_valid_string_character(current())) {
-                throw InvalidCharacter{ current_source_location(), current(), "string character" };
+                throw UnexpectedCharacter{ current_source_location(), current(), "string character" };
             }
             advance();
         }

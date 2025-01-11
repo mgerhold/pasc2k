@@ -25,18 +25,18 @@ public:
         : LexerError{ "Non-ASCII character", source_location } {}
 };
 
-class InvalidCharacter final : public LexerError {
+class UnexpectedCharacter final : public LexerError {
 public:
-    [[nodiscard]] explicit InvalidCharacter(
+    [[nodiscard]] explicit UnexpectedCharacter(
         SourceLocation const& source_location,
         char const actual,
         char const* const expected
     )
         : LexerError{
               std::isprint(static_cast<unsigned char>(actual))
-                  ? std::format("Invalid character: Got '{}', expected {}", actual, expected)
+                  ? std::format("Unexpected character: Got '{}', expected {}", actual, expected)
                   : std::format(
-                        "Invalid character: Got non-printable character #{}, expected {}",
+                        "Unexpected character: Got non-printable character #{}, expected {}",
                         static_cast<int>(actual),
                         expected
                     ),
