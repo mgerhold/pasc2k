@@ -149,7 +149,7 @@ private:
         expect(TokenType::Equals, "Expected equals sign in type definition.", create_notes());
 
         if (auto const alias = match(TokenType::Identifier)) {
-            return std::make_unique<TypeAlias>(identifier, alias.value());
+            return std::make_unique<TypeAliasDefinition>(identifier, alias.value());
         }
 
         throw ParserError{

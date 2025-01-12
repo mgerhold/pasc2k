@@ -22,12 +22,12 @@ public:
     }
 };
 
-class TypeAlias final : public TypeDefinition {
+class TypeAliasDefinition final : public TypeDefinition {
 private:
     Token const* m_referenced_type;
 
 public:
-    [[nodiscard]] explicit TypeAlias(Token const& identifier, Token const& referenced_type)
+    [[nodiscard]] explicit TypeAliasDefinition(Token const& identifier, Token const& referenced_type)
         : TypeDefinition{ identifier }, m_referenced_type{ &referenced_type } {}
 
     [[nodiscard]] Token const* referenced_type() const {
