@@ -12,6 +12,7 @@ add_library(parser
         include/parser/ast.hpp
         include/parser/label_declarations.hpp
         include/parser/constant_definitions.hpp
+        include/parser/type_definitions.hpp
 )
 
 target_include_directories(parser PUBLIC include)

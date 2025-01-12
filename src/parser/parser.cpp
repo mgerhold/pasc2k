@@ -26,11 +26,13 @@ public:
             current_is(TokenType::Label) ? std::optional{ this->label_declarations() } : std::nullopt;
         auto constant_definitions =
             current_is(TokenType::Const) ? std::optional{ this->constant_definitions() } : std::nullopt;
+        auto type_definitions = current_is(TokenType::Type) ? std::optional{ this->type_definitions() } : std::nullopt;
         return Ast{
             std::move(m_tokens),
             Block{
                   std::move(label_declarations),
                   std::move(constant_definitions),
+                  std::move(type_definitions),
                   }
         };
     }
@@ -120,93 +122,41 @@ private:
         };
     }
 
-    [[nodiscard]] std::vector<TypeDefinition> type_definitions() {
-        auto const type_token = match(TokenType::Type);
-        if (not type_token.has_value()) {
-            return {};
-        }
-
+    [[nodiscard]] TypeDefinitions type_definitions() {
+        auto const& type_token = expect(TokenType::Type, "Expected `type`.");
         auto const create_notes = [&] {
             return std::vector{
                 ParserNote{
-                           type_token.value().source_location(),
+                           type_token.source_location(),
                            "In type definitions starting from here.", }
             };
         };
 
-        auto definitions = std::vector<TypeDefinition>{};
+        auto definitions = std::vector<std::unique_ptr<TypeDefinition>>{};
         definitions.push_back(type_definition(create_notes));
         expect(TokenType::Semicolon, "Expected semicolon after type definition.", create_notes());
         while (current_is(TokenType::Identifier)) {
             definitions.push_back(type_definition(create_notes));
             expect(TokenType::Semicolon, "Expected semicolon after type definition.", create_notes());
         }
-        return definitions;
+        return TypeDefinitions{ type_token, std::move(definitions) };
     }
 
-    [[nodiscard]] TypeDefinition type_definition(auto const& create_notes) {
+    [[nodiscard]] std::unique_ptr<TypeDefinition> type_definition(auto const& create_notes) {
         auto const& identifier =
             expect(TokenType::Identifier, "Expected identifier in type definition.", create_notes());
 
-        expect(TokenType::Identifier, "Expected equals sign in type definition.", create_notes());
+        expect(TokenType::Equals, "Expected equals sign in type definition.", create_notes());
 
-        return TypeDefinition{ identifier, type() };
-    }
-
-    [[nodiscard]] std::unique_ptr<Type> type() {
-        if (auto const identifier_token = match(TokenType::Identifier)) {
-            // Built-in types.
-            if (equals_case_insensitive(identifier_token.value().lexeme(), "INTEGER")) {
-                return std::make_unique<IntegerType>();
-            }
-            if (equals_case_insensitive(identifier_token.value().lexeme(), "REAL")) {
-                return std::make_unique<RealType>();
-            }
-            if (equals_case_insensitive(identifier_token.value().lexeme(), "BOOLEAN")) {
-                return std::make_unique<BooleanType>();
-            }
-            if (equals_case_insensitive(identifier_token.value().lexeme(), "CHAR")) {
-                return std::make_unique<CharType>();
-            }
-
-            if (match(TokenType::DotDot)) {
-                // Enumerated subrange type.
-                auto const subrange_to =
-                    expect(TokenType::Identifier, "Expected identifier in enumerated subrange type.");
-                return std::make_unique<EnumeratedSubrangeType>(identifier_token.value(), subrange_to);
-            }
-            // Type identifier.
-            return std::make_unique<TypeIdentifierType>(identifier_token.value());
+        if (auto const alias = match(TokenType::Identifier)) {
+            return std::make_unique<TypeAlias>(identifier, alias.value());
         }
 
-        if (match(TokenType::LeftParenthesis)) {
-            // Enumerated type.
-            auto identifiers = std::vector<Token const*>{};
-            identifiers.push_back(&expect(TokenType::Identifier, "Expected identifier in enumerated type."));
-            while (match(TokenType::Comma)) {
-                identifiers.push_back(&expect(TokenType::Identifier, "Expected identifier in enumerated type."));
-            }
-            expect(TokenType::RightParenthesis, "Expected right parenthesis to terminated enumerated type definition.");
-            return std::make_unique<EnumeratedType>(std::move(identifiers));
-        }
-
-        if (auto const integer_token = match(TokenType::IntegerNumber)) {
-            // Integer subrange type.
-            auto const from = c2k::parse<i64>(integer_token.value().lexeme());
-            if (not from.has_value()) {
-                throw ParserError{ "Integer subrange type from value out of range.",
-                                   integer_token.value().source_location() };
-            }
-            expect(TokenType::DotDot, "Expected dot dot in integer subrange type.");
-            auto const to_token = expect(TokenType::IntegerNumber, "Expected integer number in integer subrange type.");
-            auto const to = c2k::parse<i64>(to_token.lexeme());
-            if (not to.has_value()) {
-                throw ParserError{ "Integer subrange type to value out of range.", to_token.source_location() };
-            }
-            return std::make_unique<IntegerSubrangeType>(from.value(), to.value());
-        }
-
-        throw InternalCompilerError{ "Not implemented." };
+        throw ParserError{
+            "Expected type definition.",
+            current().source_location(),
+            create_notes(),
+        };
     }
 
     [[nodiscard]] bool is_at_end() const {

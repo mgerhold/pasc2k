@@ -12,3 +12,6 @@ const
     I = '''';
     J = 'Test';
     MyValue = -DoesNotExist;
+type
+    Number = integer;
+    Distance = ThisTypeDoesNotExist;
