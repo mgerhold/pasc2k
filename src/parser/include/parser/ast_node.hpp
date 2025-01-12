@@ -65,8 +65,9 @@ public:
         context.print_indentation();
         std::print("{} [{}, {}]", name, source_location(), source_location().end());
         if constexpr (sizeof...(args) > 0) {
-            (std::print(" {}", args), ...);
+            (std::print(" '{}'", args), ...);
         }
         std::print("\n");
     }
+
 };

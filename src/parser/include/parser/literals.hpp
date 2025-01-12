@@ -94,7 +94,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "CharLiteral", std::format("'{}'", value()));
+        print_ast_node(context, "CharLiteral", value());
     }
 };
 
@@ -129,6 +129,6 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "StringLiteral", std::format("'{}'", value()));
+        print_ast_node(context, "StringLiteral", value());
     }
 };

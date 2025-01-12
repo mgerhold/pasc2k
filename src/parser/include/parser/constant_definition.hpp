@@ -45,14 +45,9 @@ public:
 
     void print(PrintContext& context) const override {
         if (m_sign.has_value()) {
-            print_ast_node(
-                context,
-                "IntegerConstant",
-                std::format("'{}'", m_identifier->lexeme()),
-                std::format("'{}'", m_sign.value().lexeme())
-            );
+            print_ast_node(context, "IntegerConstant", m_sign.value().lexeme());
         } else {
-            print_ast_node(context, "IntegerConstant", std::format("'{}'", m_identifier->lexeme()));
+            print_ast_node(context, "IntegerConstant");
         }
         context.begin_children(true);
         integer_literal().print(context);
@@ -83,14 +78,9 @@ public:
 
     void print(PrintContext& context) const override {
         if (m_sign.has_value()) {
-            print_ast_node(
-                context,
-                "RealConstant",
-                std::format("'{}'", m_identifier->lexeme()),
-                std::format("'{}'", m_sign.value().lexeme())
-            );
+            print_ast_node(context, "RealConstant", m_sign.value().lexeme());
         } else {
-            print_ast_node(context, "RealConstant", std::format("'{}'", m_identifier->lexeme()));
+            print_ast_node(context, "RealConstant");
         }
         context.begin_children(true);
         real_literal().print(context);
@@ -115,7 +105,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "CharConstant", std::format("'{}'", m_identifier->lexeme()));
+        print_ast_node(context, "CharConstant");
         context.begin_children(true);
         char_literal().print(context);
         context.end_children();
@@ -139,7 +129,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "StringConstant", std::format("'{}'", m_identifier->lexeme()));
+        print_ast_node(context, "StringConstant");
         context.begin_children(true);
         string_literal().print(context);
         context.end_children();
@@ -173,20 +163,9 @@ public:
 
     void print(PrintContext& context) const override {
         if (m_sign.has_value()) {
-            print_ast_node(
-                context,
-                "ConstantReference",
-                std::format("'{}'", m_identifier->lexeme()),
-                std::format("'{}'", sign().value().lexeme()),
-                std::format("'{}'", referenced_constant().lexeme())
-            );
+            print_ast_node(context, "ConstantReference", m_sign.value().lexeme(), referenced_constant().lexeme());
         } else {
-            print_ast_node(
-                context,
-                "ConstantReference",
-                std::format("'{}'", m_identifier->lexeme()),
-                std::format("'{}'", referenced_constant().lexeme())
-            );
+            print_ast_node(context, "ConstantReference", referenced_constant().lexeme());
         }
     }
 };
