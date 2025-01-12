@@ -89,19 +89,6 @@ private:
 
         expect(TokenType::Equals, "Expected equals sign in constant definition.", create_notes());
 
-        if (auto const integer_token = match(TokenType::IntegerNumber)) {
-            return std::make_unique<IntegerConstant>(identifier, IntegerLiteral{ integer_token.value() });
-        }
-        if (auto const real_token = match(TokenType::RealNumber)) {
-            return std::make_unique<RealConstant>(identifier, RealLiteral{ real_token.value() });
-        }
-        if (auto const char_token = match(TokenType::Char)) {
-            return std::make_unique<CharConstant>(identifier, CharLiteral{ char_token.value() });
-        }
-        if (auto const string_token = match(TokenType::String)) {
-            return std::make_unique<StringConstant>(identifier, StringLiteral{ string_token.value() });
-        }
-
         auto const sign = [&]() -> tl::optional<Token const&> {
             if (auto const plus_token = match(TokenType::Plus)) {
                 return plus_token.value();
@@ -112,9 +99,38 @@ private:
             return tl::nullopt;
         }();
 
+        // clang-format off
+        if (
+            sign.has_value()
+            and not current_is(TokenType::IntegerNumber)
+            and not current_is(TokenType::RealNumber)
+            and not current_is(TokenType::Identifier)
+        ) {
+            // clang-format on
+            throw ParserError{
+                "Expected integer, real, or identifier after sign in constant definition.",
+                current().source_location(),
+                create_notes(),
+            };
+        }
+
+        if (auto const integer_token = match(TokenType::IntegerNumber)) {
+            return std::make_unique<IntegerConstant>(identifier, sign, IntegerLiteral{ integer_token.value() });
+        }
+        if (auto const real_token = match(TokenType::RealNumber)) {
+            return std::make_unique<RealConstant>(identifier, sign, RealLiteral{ real_token.value() });
+        }
         if (auto const identifier_token = match(TokenType::Identifier)) {
             return std::make_unique<ConstantReference>(identifier, sign, identifier_token.value());
         }
+
+        if (auto const char_token = match(TokenType::Char)) {
+            return std::make_unique<CharConstant>(identifier, CharLiteral{ char_token.value() });
+        }
+        if (auto const string_token = match(TokenType::String)) {
+            return std::make_unique<StringConstant>(identifier, StringLiteral{ string_token.value() });
+        }
+
         throw ParserError{
             "Expected constant value in constant definition.",
             current().source_location(),

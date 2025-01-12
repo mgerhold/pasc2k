@@ -52,20 +52,12 @@ public:
             // 6.1.2 Special symbols.
             switch (current_upper()) {
                 case '+':
-                    if (is_digit(peek())) {
-                        number();
-                    } else {
-                        emit_token(TokenType::Plus);
-                        advance();
-                    }
+                    emit_token(TokenType::Plus);
+                    advance();
                     break;
                 case '-':
-                    if (is_digit(peek())) {
-                        number();
-                    } else {
-                        emit_token(TokenType::Minus);
-                        advance();
-                    }
+                    emit_token(TokenType::Minus);
+                    advance();
                     break;
                 case '*':
                     emit_token(TokenType::Asterisk);
@@ -176,7 +168,9 @@ public:
                         continue;
                     }
                     if (not is_letter(current_upper())) {
-                        throw UnexpectedCharacter{ current_source_location(), current(), "number, word symbol, or identifier" };
+                        throw UnexpectedCharacter{ current_source_location(),
+                                                   current(),
+                                                   "number, word symbol, or identifier" };
                     }
                     word_symbol_or_identifier();
                     break;
@@ -266,10 +260,23 @@ private:
         };
         if (not m_tokens.empty()) {
             auto const& previous_token = m_tokens.back();
-            if ((previous_token.type() == TokenType::Identifier or is_word_symbol(previous_token.type())
-                 or is_unsigned_integer_number(previous_token))
-                and (token.type() == TokenType::Identifier or is_word_symbol(token.type()) or is_unsigned_integer_number(token))
-                and not m_encountered_token_separator) {
+            // clang-format off
+            if (
+                (
+                    previous_token.type() == TokenType::Identifier
+                    or is_word_symbol(previous_token.type())
+                    or previous_token.type() == TokenType::IntegerNumber
+                    or previous_token.type() == TokenType::RealNumber
+                )
+                and (
+                    token.type() == TokenType::Identifier
+                    or is_word_symbol(token.type())
+                    or token.type() == TokenType::IntegerNumber
+                    or token.type() == TokenType::RealNumber
+                )
+                and not m_encountered_token_separator
+            ) {
+            // clang-format off
                 auto const source_location = SourceLocation{ m_path,
                                                              m_source,
                                                              previous_token.source_location().m_offset
@@ -289,11 +296,6 @@ private:
     void number() {
         // 6.1.5
         auto const start = m_index;
-
-        // Optional sign.
-        if (current() == '+' or current() == '-') {
-            advance();
-        }
 
         // Digit sequence.
         if (not is_digit(current())) {
@@ -531,11 +533,6 @@ private:
                 return false;
         }
         throw InternalCompilerError{ "Unknown TokenType" };
-    }
-
-    [[nodiscard]] static bool is_unsigned_integer_number(Token const& token) {
-        return token.type() == TokenType::IntegerNumber and token.lexeme().front() != '+'
-               and token.lexeme().front() != '-';
     }
 };
 

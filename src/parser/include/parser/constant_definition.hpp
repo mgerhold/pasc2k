@@ -24,11 +24,16 @@ public:
 
 class IntegerConstant final : public ConstantDefinition {
 private:
+    tl::optional<Token const&> m_sign;
     IntegerLiteral m_integer_literal;
 
 public:
-    [[nodiscard]] explicit IntegerConstant(Token const& identifier, IntegerLiteral const& integer_literal)
-        : ConstantDefinition{ identifier }, m_integer_literal{ integer_literal } {}
+    [[nodiscard]] explicit IntegerConstant(
+        Token const& identifier,
+        tl::optional<Token const&> const& sign,
+        IntegerLiteral const& integer_literal
+    )
+        : ConstantDefinition{ identifier }, m_sign{ sign }, m_integer_literal{ integer_literal } {}
 
     [[nodiscard]] IntegerLiteral const& integer_literal() const {
         return m_integer_literal;
@@ -39,7 +44,16 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "IntegerConstant", std::format("'{}'", m_identifier->lexeme()));
+        if (m_sign.has_value()) {
+            print_ast_node(
+                context,
+                "IntegerConstant",
+                std::format("'{}'", m_identifier->lexeme()),
+                std::format("'{}'", m_sign.value().lexeme())
+            );
+        } else {
+            print_ast_node(context, "IntegerConstant", std::format("'{}'", m_identifier->lexeme()));
+        }
         context.begin_children(true);
         integer_literal().print(context);
         context.end_children();
@@ -48,11 +62,16 @@ public:
 
 class RealConstant final : public ConstantDefinition {
 private:
+    tl::optional<Token const&> m_sign;
     RealLiteral m_real_literal;
 
 public:
-    [[nodiscard]] explicit RealConstant(Token const& identifier, RealLiteral const& real_literal)
-        : ConstantDefinition{ identifier }, m_real_literal{ real_literal } {}
+    [[nodiscard]] explicit RealConstant(
+        Token const& identifier,
+        tl::optional<Token const&> const& sign,
+        RealLiteral const& real_literal
+    )
+        : ConstantDefinition{ identifier }, m_sign{ sign }, m_real_literal{ real_literal } {}
 
     [[nodiscard]] RealLiteral const& real_literal() const {
         return m_real_literal;
@@ -63,7 +82,16 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "RealConstant", std::format("'{}'", m_identifier->lexeme()));
+        if (m_sign.has_value()) {
+            print_ast_node(
+                context,
+                "RealConstant",
+                std::format("'{}'", m_identifier->lexeme()),
+                std::format("'{}'", m_sign.value().lexeme())
+            );
+        } else {
+            print_ast_node(context, "RealConstant", std::format("'{}'", m_identifier->lexeme()));
+        }
         context.begin_children(true);
         real_literal().print(context);
         context.end_children();
