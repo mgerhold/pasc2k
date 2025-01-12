@@ -150,7 +150,7 @@ private:
             };
         };
 
-        auto definitions = std::vector<std::unique_ptr<TypeDefinition>>{};
+        auto definitions = std::vector<TypeDefinition>{};
         definitions.push_back(type_definition(create_notes));
         expect(TokenType::Semicolon, "Expected semicolon after type definition.", create_notes());
         while (current_is(TokenType::Identifier)) {
@@ -160,18 +160,22 @@ private:
         return TypeDefinitions{ type_token, std::move(definitions) };
     }
 
-    [[nodiscard]] std::unique_ptr<TypeDefinition> type_definition(auto const& create_notes) {
+    [[nodiscard]] TypeDefinition type_definition(auto const& create_notes) {
         auto const& identifier =
             expect(TokenType::Identifier, "Expected identifier in type definition.", create_notes());
 
         expect(TokenType::Equals, "Expected equals sign in type definition.", create_notes());
 
+        return TypeDefinition{ Identifier{ identifier }, type(create_notes) };
+    }
+
+    [[nodiscard]] std::unique_ptr<Type> type(auto const& create_notes) {
         if (auto const alias = match(TokenType::Identifier)) {
-            return std::make_unique<TypeAliasDefinition>(identifier, alias.value());
+            return std::make_unique<TypeAliasDefinition>(Identifier{ alias.value() });
         }
 
         if (current_is(TokenType::LeftParenthesis)) {
-            return enumerated_type_definition(identifier, create_notes);
+            return enumerated_type_definition(create_notes);
         }
 
         throw ParserError{
@@ -181,29 +185,21 @@ private:
         };
     }
 
-    [[nodiscard]] std::unique_ptr<EnumeratedTypeDefinition> enumerated_type_definition(
-        Token const& identifier,
-        auto const& create_notes
-    ) {
+    [[nodiscard]] std::unique_ptr<EnumeratedTypeDefinition> enumerated_type_definition(auto const& create_notes) {
         auto const& left_parenthesis =
             expect(TokenType::LeftParenthesis, "Expected `(` in enumerated type definition.", create_notes());
-        auto identifiers = std::vector<Token const*>{};
-        identifiers.push_back(
-            &expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
+        auto identifiers = std::vector<Identifier>{};
+        identifiers.emplace_back(
+            expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
         );
         while (match(TokenType::Comma)) {
-            identifiers.push_back(
-                &expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
+            identifiers.emplace_back(
+                expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
             );
         }
         auto const& right_parenthesis =
             expect(TokenType::RightParenthesis, "Expected `)` in enumerated type definition.", create_notes());
-        return std::make_unique<EnumeratedTypeDefinition>(
-            identifier,
-            left_parenthesis,
-            std::move(identifiers),
-            right_parenthesis
-        );
+        return std::make_unique<EnumeratedTypeDefinition>(left_parenthesis, std::move(identifiers), right_parenthesis);
     }
 
     [[nodiscard]] bool is_at_end() const {

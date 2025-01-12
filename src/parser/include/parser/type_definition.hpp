@@ -4,60 +4,66 @@
 #include <memory>
 #include "ast_node.hpp"
 
-class TypeDefinition : public AstNode {
-private:
-    Token const* m_identifier;
+class Type : public AstNode {};
 
-protected:
-    [[nodiscard]] explicit TypeDefinition(Token const& identifier)
-        : m_identifier{ &identifier } {}
+class TypeDefinition final : public AstNode {
+private:
+    Identifier m_identifier;
+    std::unique_ptr<Type> m_type;
 
 public:
-    [[nodiscard]] Token const& identifier() const {
-        return *m_identifier;
+    [[nodiscard]] explicit TypeDefinition(Identifier const& identifier, std::unique_ptr<Type> type)
+        : m_identifier{ identifier }, m_type{ std::move(type) } {}
+
+    [[nodiscard]] Identifier const& identifier() const {
+        return m_identifier;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return m_identifier->source_location();
+        return m_identifier.source_location().join(m_type->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "TypeDefinition");
+        context.print_children(m_identifier, *m_type);
     }
 };
 
-class TypeAliasDefinition final : public TypeDefinition {
+class TypeAliasDefinition final : public Type {
 private:
-    Token const* m_referenced_type;
+    Identifier m_referenced_type;
 
 public:
-    [[nodiscard]] explicit TypeAliasDefinition(Token const& identifier, Token const& referenced_type)
-        : TypeDefinition{ identifier }, m_referenced_type{ &referenced_type } {}
+    [[nodiscard]] explicit TypeAliasDefinition(Identifier const& referenced_type)
+        : m_referenced_type{ referenced_type } {}
 
-    [[nodiscard]] Token const* referenced_type() const {
+    [[nodiscard]] Identifier const& referenced_type() const {
         return m_referenced_type;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return TypeDefinition::source_location().join(m_referenced_type->source_location());
+        return m_referenced_type.source_location();
     }
 
     void print(PrintContext& context) const override {
-        context.print(*this, "TypeAliasDefinition", identifier().lexeme(), m_referenced_type->lexeme());
+        context.print(*this, "TypeAliasDefinition");
+        context.print_children(m_referenced_type);
     }
 };
 
-class EnumeratedTypeDefinition final : public TypeDefinition {
+class EnumeratedTypeDefinition final : public Type {
 private:
     Token const* m_left_parenthesis;
-    std::vector<Token const*> m_identifiers;
+    std::vector<Identifier> m_identifiers;
     Token const* m_right_parenthesis;
 
 public:
     [[nodiscard]] explicit EnumeratedTypeDefinition(
-        Token const& identifier,
         Token const& left_parenthesis,
-        std::vector<Token const*> identifiers,
+        std::vector<Identifier> identifiers,
         Token const& right_parenthesis
     )
-        : TypeDefinition{ identifier },
-          m_left_parenthesis{ &left_parenthesis },
+        : m_left_parenthesis{ &left_parenthesis },
           m_identifiers{ std::move(identifiers) },
           m_right_parenthesis{ &right_parenthesis } {
         if (m_identifiers.empty()) {
@@ -65,7 +71,7 @@ public:
         }
     }
 
-    [[nodiscard]] std::vector<Token const*> const& identifiers() const {
+    [[nodiscard]] std::vector<Identifier> const& identifiers() const {
         return m_identifiers;
     }
 
@@ -74,18 +80,14 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        context.print(
-            *this,
-            "EnumeratedTypeDefinition",
-            identifier().lexeme(),
-            std::format(
-                "({})",
-                c2k::join(
-                    m_identifiers
-                        | std::views::transform([](auto const* token) { return std::format("'{}'", token->lexeme()); }),
-                    ", "
-                )
-            )
+        using std::views::transform, std::ranges::to;
+        context.print(*this, "EnumeratedTypeDefinition");
+        // clang-format off
+        context.print_children(
+            m_identifiers
+                | transform([](auto const& identifier) { return static_cast<AstNode const*>(&identifier); })
+                | to<std::vector>()
         );
+        // clang-format on
     }
 };

@@ -9,7 +9,11 @@ private:
 
 public:
     [[nodiscard]] explicit Identifier(Token const& token)
-        : m_token{ &token } {}
+        : m_token{ &token } {
+        if (token.type() != TokenType::Identifier) {
+            throw InternalCompilerError{ "Expected identifier token." };
+        }
+    }
 
     [[nodiscard]] SourceLocation source_location() const override {
         return m_token->source_location();
