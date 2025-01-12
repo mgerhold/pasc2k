@@ -126,10 +126,10 @@ private:
             return std::make_unique<ConstantReference>(sign, identifier_token.value());
         }
 
-        if (auto const char_token = match(TokenType::Char)) {
+        if (auto const char_token = match(TokenType::CharValue)) {
             return std::make_unique<CharConstant>(CharLiteral{ char_token.value() });
         }
-        if (auto const string_token = match(TokenType::String)) {
+        if (auto const string_token = match(TokenType::StringValue)) {
             return std::make_unique<StringConstant>(StringLiteral{ string_token.value() });
         }
 
@@ -172,7 +172,7 @@ private:
     [[nodiscard]] std::unique_ptr<Type> type(auto const& create_notes) {
         // clang-format off
         if (
-            current_is_any_of(TokenType::Plus, TokenType::Minus, TokenType::Char, TokenType::IntegerNumber)
+            current_is_any_of(TokenType::Plus, TokenType::Minus, TokenType::CharValue, TokenType::IntegerNumber)
             or continues_with(TokenType::Identifier, TokenType::DotDot)
         ) {
             // clang-format on

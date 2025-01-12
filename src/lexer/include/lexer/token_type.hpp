@@ -77,7 +77,14 @@ enum class TokenType {
     RealNumber,
 
     // 6.1.7 Character Strings.
+    CharValue,
+    StringValue,
+
+    // Built-in types.
+    Boolean,
     Char,
+    Integer,
+    Real,
     String,
 
     EndOfFile,

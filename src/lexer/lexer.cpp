@@ -426,6 +426,16 @@ private:
             emit_token(TokenType::While, start, m_index - start);
         } else if (equals_case_insensitive(lexeme, "WITH")) {
             emit_token(TokenType::With, start, m_index - start);
+        } else if (equals_case_insensitive(lexeme, "BOOLEAN")) {
+            emit_token(TokenType::Boolean, start, m_index - start);
+        } else if (equals_case_insensitive(lexeme, "INTEGER")) {
+            emit_token(TokenType::Integer, start, m_index - start);
+        } else if (equals_case_insensitive(lexeme, "REAL")) {
+            emit_token(TokenType::Real, start, m_index - start);
+        } else if (equals_case_insensitive(lexeme, "CHAR")) {
+            emit_token(TokenType::Char, start, m_index - start);
+        } else if (equals_case_insensitive(lexeme, "STRING")) {
+            emit_token(TokenType::String, start, m_index - start);
         } else {
             emit_token(TokenType::Identifier, start, m_index - start);
         }
@@ -460,10 +470,10 @@ private:
         advance();
         auto const num_characters = m_index - start - 2 - num_apostrophe_images;
         if (num_characters == 1) {
-            emit_token(TokenType::Char, start, m_index - start);
+            emit_token(TokenType::CharValue, start, m_index - start);
         } else {
             assert(num_characters > 1);
-            emit_token(TokenType::String, start, m_index - start);
+            emit_token(TokenType::StringValue, start, m_index - start);
         }
     }
 
@@ -531,9 +541,14 @@ private:
             case TokenType::Directive:
             case TokenType::IntegerNumber:
             case TokenType::RealNumber:
-            case TokenType::Char:
-            case TokenType::String:
+            case TokenType::CharValue:
+            case TokenType::StringValue:
             case TokenType::EndOfFile:
+            case TokenType::Boolean:
+            case TokenType::Char:
+            case TokenType::Integer:
+            case TokenType::Real:
+            case TokenType::String:
                 return false;
         }
         throw InternalCompilerError{ "Unknown TokenType" };

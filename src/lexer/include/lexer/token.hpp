@@ -33,8 +33,8 @@ struct std::formatter<Token> : std::formatter<std::string> {
             case TokenType::Identifier:
             case TokenType::IntegerNumber:
             case TokenType::RealNumber:
-            case TokenType::Char:
-            case TokenType::String:
+            case TokenType::CharValue:
+            case TokenType::StringValue:
                 return std::formatter<std::string>::format(std::format("{}({})", token.type(), token.lexeme()), context);
             default:
                 return std::formatter<std::string>::format(std::format("{}", token.type()), context);
