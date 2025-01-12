@@ -152,11 +152,40 @@ private:
             return std::make_unique<TypeAliasDefinition>(identifier, alias.value());
         }
 
+        if (current_is(TokenType::LeftParenthesis)) {
+            return enumerated_type_definition(identifier, create_notes);
+        }
+
         throw ParserError{
             "Expected type definition.",
             current().source_location(),
             create_notes(),
         };
+    }
+
+    [[nodiscard]] std::unique_ptr<EnumeratedTypeDefinition> enumerated_type_definition(
+        Token const& identifier,
+        auto const& create_notes
+    ) {
+        auto const& left_parenthesis =
+            expect(TokenType::LeftParenthesis, "Expected `(` in enumerated type definition.", create_notes());
+        auto identifiers = std::vector<Token const*>{};
+        identifiers.push_back(
+            &expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
+        );
+        while (match(TokenType::Comma)) {
+            identifiers.push_back(
+                &expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
+            );
+        }
+        auto const& right_parenthesis =
+            expect(TokenType::RightParenthesis, "Expected `)` in enumerated type definition.", create_notes());
+        return std::make_unique<EnumeratedTypeDefinition>(
+            identifier,
+            left_parenthesis,
+            std::move(identifiers),
+            right_parenthesis
+        );
     }
 
     [[nodiscard]] bool is_at_end() const {

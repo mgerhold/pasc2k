@@ -15,3 +15,4 @@ const
 type
     Number = integer;
     Distance = ThisTypeDoesNotExist;
+    Colors = (Red, Green, Blue);
