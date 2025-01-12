@@ -170,6 +170,70 @@ private:
     }
 
     [[nodiscard]] std::unique_ptr<Type> type(auto const& create_notes) {
+        // clang-format off
+        if (
+            current_is_any_of(
+                TokenType::Array,
+                TokenType::Record,
+                TokenType::Set,
+                TokenType::File,
+                TokenType::Packed
+            )
+        ) {
+            return std::make_unique<StructuredTypeDefinition>(structured_type_definition(create_notes));
+        }
+        // clang-format on
+
+        if (auto const real_token = match(TokenType::Real)) {
+            return std::make_unique<RealType>(real_token.value());
+        }
+        if (auto const string_token = match(TokenType::String)) {
+            return std::make_unique<StringType>(string_token.value());
+        }
+        return ordinal_type(create_notes);
+    }
+
+    [[nodiscard]] StructuredTypeDefinition structured_type_definition(auto const& create_notes) {
+        auto const packed = match(TokenType::Packed);
+        return StructuredTypeDefinition{ packed, unpacked_structured_type_definition(create_notes) };
+    }
+
+    [[nodiscard]] std::unique_ptr<UnpackedStructuredTypeDefinition> unpacked_structured_type_definition(
+        auto const& create_notes
+    ) {
+        if (auto const array = match(TokenType::Array)) {
+            return std::make_unique<ArrayTypeDefinition>(array_type_definition(array.value(), create_notes));
+        }
+        /*if (auto const record = match(TokenType::Record)) {
+            return record_type_definition(create_notes);
+        }
+        if (auto const set = match(TokenType::Set)) {
+            return set_type_definition(create_notes);
+        }
+        if (auto const file = match(TokenType::File)) {
+            return file_type_definition(create_notes);
+        }*/
+        throw ParserError{
+            "Expected structured type definition.",
+            current().source_location(),
+            create_notes(),
+        };
+    }
+
+    [[nodiscard]] ArrayTypeDefinition array_type_definition(Token const& array_token, auto const& create_notes) {
+        expect(TokenType::LeftSquareBracket, "Expected `[` in array type definition.", create_notes());
+        auto index_types = std::vector<std::unique_ptr<OrdinalType>>{};
+        index_types.push_back(ordinal_type(create_notes));
+        while (match(TokenType::Comma)) {
+            index_types.push_back(ordinal_type(create_notes));
+        }
+        expect(TokenType::RightSquareBracket, "Expected `]` in array type definition.", create_notes());
+        expect(TokenType::Of, "Expected `of` in array type definition.", create_notes());
+        auto element_type = type(create_notes);
+        return ArrayTypeDefinition{ array_token, std::move(index_types), std::move(element_type) };
+    }
+
+    [[nodiscard]] std::unique_ptr<OrdinalType> ordinal_type(auto const& create_notes) {
         if (auto const boolean_token = match(TokenType::Boolean)) {
             return std::make_unique<BooleanType>(boolean_token.value());
         }
@@ -179,13 +243,27 @@ private:
         if (auto const integer_token = match(TokenType::Integer)) {
             return std::make_unique<IntegerType>(integer_token.value());
         }
-        if (auto const real_token = match(TokenType::Real)) {
-            return std::make_unique<RealType>(real_token.value());
-        }
-        if (auto const string_token = match(TokenType::String)) {
-            return std::make_unique<StringType>(string_token.value());
+
+        if (current_is(TokenType::LeftParenthesis)) {
+            return enumerated_type_definition(create_notes);
         }
 
+        auto const is_subrange_type =
+            current_is_any_of(TokenType::Plus, TokenType::Minus, TokenType::CharValue, TokenType::IntegerNumber)
+            or continues_with(TokenType::Identifier, TokenType::DotDot);
+
+        if (is_subrange_type) {
+            return std::make_unique<SubrangeTypeDefinition>(subrange_type(create_notes));
+        }
+
+        // We don't really know whether a type alias is an ordinal type. This will be
+        // resolved during semantic analysis. For now, we treat it as an ordinal type.
+        return std::make_unique<TypeAliasDefinition>(Identifier{
+            expect(TokenType::Identifier, "Expected identifier in type definition.", create_notes()),
+        });
+    }
+
+    [[nodiscard]] SubrangeTypeDefinition subrange_type(auto const& create_notes) {
         // clang-format off
         if (
             current_is_any_of(TokenType::Plus, TokenType::Minus, TokenType::CharValue, TokenType::IntegerNumber)
@@ -195,15 +273,7 @@ private:
             auto from = constant(create_notes);
             expect(TokenType::DotDot, "Expected `..` in subrange type definition.", create_notes());
             auto to = constant(create_notes);
-            return std::make_unique<SubrangeTypeDefinition>(std::move(from), std::move(to));
-        }
-
-        if (auto const alias = match(TokenType::Identifier)) {
-            return std::make_unique<TypeAliasDefinition>(Identifier{ alias.value() });
-        }
-
-        if (current_is(TokenType::LeftParenthesis)) {
-            return enumerated_type_definition(create_notes);
+            return SubrangeTypeDefinition(std::move(from), std::move(to));
         }
 
         throw ParserError{

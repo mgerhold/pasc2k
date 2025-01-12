@@ -87,7 +87,7 @@ public:
     }
 };
 
-class TypeAliasDefinition final : public Type {
+class TypeAliasDefinition final : public OrdinalType {
 private:
     Identifier m_referenced_type;
 
@@ -109,7 +109,7 @@ public:
     }
 };
 
-class EnumeratedTypeDefinition final : public Type {
+class EnumeratedTypeDefinition final : public OrdinalType {
 private:
     Token const* m_left_parenthesis;
     std::vector<Identifier> m_identifiers;
@@ -150,7 +150,7 @@ public:
     }
 };
 
-class SubrangeTypeDefinition final : public Type {
+class SubrangeTypeDefinition final : public OrdinalType {
 private:
     std::unique_ptr<Constant> m_from;
     std::unique_ptr<Constant> m_to;
@@ -176,3 +176,78 @@ public:
         context.print_children(*m_from, *m_to);
     }
 };
+
+class UnpackedStructuredTypeDefinition : public Type {};
+
+class StructuredTypeDefinition final : public Type {
+private:
+    tl::optional<Token const&> m_packed;
+    std::unique_ptr<UnpackedStructuredTypeDefinition> m_unpacked_structured_type_definition;
+
+public:
+    [[nodiscard]] explicit StructuredTypeDefinition(
+        tl::optional<Token const&> const& packed,
+        std::unique_ptr<UnpackedStructuredTypeDefinition> unpacked_structured_type_definition
+    )
+        : m_packed{ packed }, m_unpacked_structured_type_definition{ std::move(unpacked_structured_type_definition) } {}
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        if (m_packed.has_value()) {
+            return m_packed.value().source_location().join(m_unpacked_structured_type_definition->source_location());
+        }
+        return m_unpacked_structured_type_definition->source_location();
+    }
+
+    void print(PrintContext& context) const override {
+        if (m_packed) {
+            context.print(*this, "StructuredTypeDefinition", m_packed->lexeme());
+        } else {
+            context.print(*this, "StructuredTypeDefinition");
+        }
+        context.print_children(*m_unpacked_structured_type_definition);
+    }
+};
+
+class ArrayTypeDefinition final : public UnpackedStructuredTypeDefinition {
+private:
+    Token const* m_array;
+    std::vector<std::unique_ptr<OrdinalType>> m_index_types;
+    std::unique_ptr<Type> m_component_type;
+
+public:
+    [[nodiscard]] ArrayTypeDefinition(
+        Token const& array,
+        std::vector<std::unique_ptr<OrdinalType>> index_types,
+        std::unique_ptr<Type> component_type
+    )
+        : m_array{ &array }, m_index_types{ std::move(index_types) }, m_component_type{ std::move(component_type) } {}
+
+    [[nodiscard]] std::vector<std::unique_ptr<OrdinalType>> const& index_types() const {
+        return m_index_types;
+    }
+
+    [[nodiscard]] Type const& component_type() const {
+        return *m_component_type;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_array->source_location().join(component_type().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "ArrayTypeDefinition");
+        auto children = std::vector<AstNode const*>{};
+        for (auto const& index_type : m_index_types) {
+            children.push_back(index_type.get());
+        }
+        children.push_back(m_component_type.get());
+        context.print_children(children);
+    }
+};
+
+/*class RecordTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+
+class SetTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+
+class FileTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+*/
