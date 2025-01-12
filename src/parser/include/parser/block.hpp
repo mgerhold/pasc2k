@@ -67,17 +67,17 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "Block");
-        context.begin_children(false);
+        context.print(*this, "Block");
+        auto children = std::vector<AstNode const*>{};
         if (m_label_declarations.has_value()) {
-            m_label_declarations.value().print(context);
+            children.push_back(&m_label_declarations.value());
         }
         if (m_constant_definitions.has_value()) {
-            m_constant_definitions.value().print(context);
+            children.push_back(&m_constant_definitions.value());
         }
         if (m_type_definitions.has_value()) {
-            m_type_definitions.value().print(context);
+            children.push_back(&m_type_definitions.value());
         }
-        context.end_children();
+        context.print_children(children);
     }
 };

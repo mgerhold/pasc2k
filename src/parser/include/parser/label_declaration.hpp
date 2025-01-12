@@ -19,9 +19,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "LabelDeclaration");
-        context.begin_children(true);
-        m_integer_literal.print(context);
-        context.end_children();
+        context.print(*this, "LabelDeclaration");
+        context.print_children(m_integer_literal);
     }
 };

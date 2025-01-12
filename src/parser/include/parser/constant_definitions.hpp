@@ -27,11 +27,14 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "ConstantDefinitions");
-        context.begin_children(m_constant_definitions.size() == 1);
-        for (auto const& definition : m_constant_definitions) {
-            definition.print(context);
-        }
-        context.end_children();
+        using std::views::transform, std::ranges::to;
+        context.print(*this, "ConstantDefinitions");
+        // clang-format off
+        context.print_children(
+            m_constant_definitions
+            | transform([](auto const& e) { return static_cast<AstNode const*>(&e); })
+            | to<std::vector>()
+        );
+        // clang-format on
     }
 };

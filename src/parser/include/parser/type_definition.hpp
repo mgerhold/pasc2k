@@ -39,7 +39,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "TypeAliasDefinition", identifier().lexeme(), referenced_type()->lexeme());
+        context.print(*this, "TypeAliasDefinition", identifier().lexeme(), m_referenced_type->lexeme());
     }
 };
 
@@ -74,8 +74,8 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(
-            context,
+        context.print(
+            *this,
             "EnumeratedTypeDefinition",
             identifier().lexeme(),
             std::format(

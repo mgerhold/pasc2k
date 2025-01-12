@@ -29,7 +29,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "IntegerLiteral", value());
+        context.print(*this, "IntegerLiteral", value());
     }
 };
 
@@ -59,7 +59,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "RealLiteral", value());
+        context.print(*this, "RealLiteral", value());
     }
 };
 
@@ -94,7 +94,7 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "CharLiteral", value());
+        context.print(*this, "CharLiteral", value());
     }
 };
 
@@ -129,6 +129,6 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "StringLiteral", value());
+        context.print(*this, "StringLiteral", value());
     }
 };

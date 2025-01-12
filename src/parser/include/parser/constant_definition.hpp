@@ -26,11 +26,8 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "ConstantDefinition");
-        context.begin_children(false);
-        m_identifier.print(context);
-        m_constant->print(context);
-        context.end_children();
+        context.print(*this, "ConstantDefinition");
+        context.print_children(m_identifier, *m_constant);
     }
 };
 
@@ -56,13 +53,11 @@ public:
 
     void print(PrintContext& context) const override {
         if (m_sign.has_value()) {
-            print_ast_node(context, "IntegerConstant", m_sign.value().lexeme());
+            context.print(*this, "IntegerConstant", m_sign.value().lexeme());
         } else {
-            print_ast_node(context, "IntegerConstant");
+            context.print(*this, "IntegerConstant");
         }
-        context.begin_children(true);
-        integer_literal().print(context);
-        context.end_children();
+        context.print_children(integer_literal());
     }
 };
 
@@ -88,13 +83,11 @@ public:
 
     void print(PrintContext& context) const override {
         if (m_sign.has_value()) {
-            print_ast_node(context, "RealConstant", m_sign.value().lexeme());
+            context.print(*this, "RealConstant", m_sign.value().lexeme());
         } else {
-            print_ast_node(context, "RealConstant");
+            context.print(*this, "RealConstant");
         }
-        context.begin_children(true);
-        real_literal().print(context);
-        context.end_children();
+        context.print_children(real_literal());
     }
 };
 
@@ -115,10 +108,8 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "CharConstant");
-        context.begin_children(true);
-        char_literal().print(context);
-        context.end_children();
+        context.print(*this, "CharConstant");
+        context.print_children(char_literal());
     }
 };
 
@@ -139,10 +130,8 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "StringConstant");
-        context.begin_children(true);
-        string_literal().print(context);
-        context.end_children();
+        context.print(*this, "StringConstant");
+        context.print_children(string_literal());
     }
 };
 
@@ -172,9 +161,9 @@ public:
 
     void print(PrintContext& context) const override {
         if (m_sign.has_value()) {
-            print_ast_node(context, "ConstantReference", m_sign.value().lexeme(), referenced_constant().lexeme());
+            context.print(*this, "ConstantReference", m_sign.value().lexeme(), referenced_constant().lexeme());
         } else {
-            print_ast_node(context, "ConstantReference", referenced_constant().lexeme());
+            context.print(*this, "ConstantReference", referenced_constant().lexeme());
         }
     }
 };

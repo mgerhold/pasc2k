@@ -31,11 +31,14 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "TypeDefinitions");
-        context.begin_children(m_type_definitions.size() == 1);
-        for (auto const& definition : m_type_definitions) {
-            definition->print(context);
-        }
-        context.end_children();
+        using std::views::transform, std::ranges::to;
+        context.print(*this, "TypeDefinitions");
+        // clang-format off
+        context.print_children(
+            m_type_definitions
+            | transform([](auto const& e) { return static_cast<AstNode const*>(e.get()); })
+            | to<std::vector>()
+        );
+        // clang-format on
     }
 };

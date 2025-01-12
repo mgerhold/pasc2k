@@ -16,6 +16,6 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "Identifier", m_token->lexeme());
+        context.print(*this, "Identifier", m_token->lexeme());
     }
 };

@@ -27,11 +27,14 @@ public:
     }
 
     void print(PrintContext& context) const override {
-        print_ast_node(context, "LabelDeclarations");
-        context.begin_children(m_label_declarations.size() == 1);
-        for (auto const& declaration : m_label_declarations) {
-            declaration.print(context);
-        }
-        context.end_children();
+        using std::views::transform, std::ranges::to;
+        context.print(*this, "LabelDeclarations");
+        // clang-format off
+        context.print_children(
+            m_label_declarations
+            | transform([](auto const& e) { return static_cast<AstNode const*>(&e); })
+            | to<std::vector>()
+        );
+        // clang-format on
     }
 };
