@@ -16,3 +16,7 @@ type
     Number = integer;
     Distance = ThisTypeDoesNotExist;
     Colors = (Red, Green, Blue);
+    Range1 = 1..10;
+    Range2 = -10..+10;
+    Range3 = red..green;
+    Range4 = '0'..'9';

@@ -3,6 +3,7 @@
 #include <lexer/token.hpp>
 #include <memory>
 #include "ast_node.hpp"
+#include "constant_definition.hpp"
 
 class Type : public AstNode {};
 
@@ -89,5 +90,32 @@ public:
                 | to<std::vector>()
         );
         // clang-format on
+    }
+};
+
+class SubrangeTypeDefinition final : public Type {
+private:
+    std::unique_ptr<Constant> m_from;
+    std::unique_ptr<Constant> m_to;
+
+public:
+    [[nodiscard]] explicit SubrangeTypeDefinition(std::unique_ptr<Constant> from, std::unique_ptr<Constant> to)
+        : m_from{ std::move(from) }, m_to{ std::move(to) } {}
+
+    [[nodiscard]] std::unique_ptr<Constant> const& from() const {
+        return m_from;
+    }
+
+    [[nodiscard]] std::unique_ptr<Constant> const& to() const {
+        return m_to;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_from->source_location().join(m_to->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "SubrangeTypeDefinition");
+        context.print_children(*m_from, *m_to);
     }
 };

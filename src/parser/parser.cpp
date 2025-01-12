@@ -170,6 +170,18 @@ private:
     }
 
     [[nodiscard]] std::unique_ptr<Type> type(auto const& create_notes) {
+        // clang-format off
+        if (
+            current_is_any_of(TokenType::Plus, TokenType::Minus, TokenType::Char, TokenType::IntegerNumber)
+            or continues_with(TokenType::Identifier, TokenType::DotDot)
+        ) {
+            // clang-format on
+            auto from = constant(create_notes);
+            expect(TokenType::DotDot, "Expected `..` in subrange type definition.", create_notes());
+            auto to = constant(create_notes);
+            return std::make_unique<SubrangeTypeDefinition>(std::move(from), std::move(to));
+        }
+
         if (auto const alias = match(TokenType::Identifier)) {
             return std::make_unique<TypeAliasDefinition>(Identifier{ alias.value() });
         }
@@ -213,15 +225,30 @@ private:
         return m_tokens.back();
     }
 
-    [[nodiscard]] Token const& peek() const {
-        if (m_index + 1 < m_tokens.size()) {
-            return m_tokens.at(m_index + 1);
+    [[nodiscard]] Token const& peek(usize const offset = 1) const {
+        auto const position = m_index + offset;
+        if (position < m_tokens.size()) {
+            return m_tokens.at(position);
         }
         return m_tokens.back();
     }
 
     [[nodiscard]] bool current_is(TokenType const type) const {
         return current().type() == type;
+    }
+
+    [[nodiscard]] bool current_is_any_of(std::same_as<TokenType> auto const... types) const {
+        return ((current().type() == types) or ...);
+    }
+
+    [[nodiscard]] bool continues_with(std::same_as<TokenType> auto const... types) const {
+        auto offset = usize{ 0 };
+        return ([&] {
+            auto const actual_type = peek(offset).type();
+            auto const result = actual_type == types;
+            ++offset;
+            return result;
+        }() and ...);
     }
 
     [[nodiscard]] tl::optional<Token const&> match(TokenType const type) {

@@ -308,7 +308,7 @@ private:
             advance();
         }
 
-        if (current() != '.' and current_upper() != 'E') {
+        if ((current() == '.' and peek() == '.') or (current() != '.' and current_upper() != 'E')) {
             // Integer.
             emit_token(TokenType::IntegerNumber, start, m_index - start);
             return;
