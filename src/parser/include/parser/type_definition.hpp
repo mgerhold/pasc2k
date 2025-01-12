@@ -7,6 +7,63 @@
 
 class Type : public AstNode {};
 
+namespace detail {
+    template<typename Parent, TokenType token_type>
+    class BuiltInType : public Parent {
+    private:
+        Token const* m_token;
+        std::string_view m_ast_node_name;
+
+    public:
+        [[nodiscard]] explicit BuiltInType(Token const& token, std::string_view const ast_node_name)
+            : m_token{ &token }, m_ast_node_name{ ast_node_name } {
+            if (m_token->type() != token_type) {
+                throw InternalCompilerError{ "Invalid token type for built-in type." };
+            }
+        }
+
+        [[nodiscard]] SourceLocation source_location() const override {
+            return m_token->source_location();
+        }
+
+        void print(AstNode::PrintContext& context) const override {
+            context.print(*this, m_ast_node_name);
+        }
+    };
+}  // namespace detail
+
+class RealType final : public detail::BuiltInType<Type, TokenType::Real> {
+public:
+    [[nodiscard]] explicit RealType(Token const& token)
+        : BuiltInType{ token, "RealType" } {}
+};
+
+class StringType final : public detail::BuiltInType<Type, TokenType::String> {
+public:
+    [[nodiscard]] explicit StringType(Token const& token)
+        : BuiltInType{ token, "StringType" } {}
+};
+
+class OrdinalType : public Type {};
+
+class BooleanType final : public detail::BuiltInType<OrdinalType, TokenType::Boolean> {
+public:
+    [[nodiscard]] explicit BooleanType(Token const& token)
+        : BuiltInType{ token, "BooleanType" } {}
+};
+
+class IntegerType final : public detail::BuiltInType<OrdinalType, TokenType::Integer> {
+public:
+    [[nodiscard]] explicit IntegerType(Token const& token)
+        : BuiltInType{ token, "IntegerType" } {}
+};
+
+class CharType final : public detail::BuiltInType<OrdinalType, TokenType::Char> {
+public:
+    [[nodiscard]] explicit CharType(Token const& token)
+        : BuiltInType{ token, "CharType" } {}
+};
+
 class TypeDefinition final : public AstNode {
 private:
     Identifier m_identifier;

@@ -14,6 +14,10 @@ const
     MyValue = -DoesNotExist;
 type
     Number = integer;
+    RealNumber = real;
+    Letter = char;
+    Sentence = string;
+    Predicate = boolean;
     Distance = ThisTypeDoesNotExist;
     Colors = (Red, Green, Blue);
     Range1 = 1..10;

@@ -170,6 +170,22 @@ private:
     }
 
     [[nodiscard]] std::unique_ptr<Type> type(auto const& create_notes) {
+        if (auto const boolean_token = match(TokenType::Boolean)) {
+            return std::make_unique<BooleanType>(boolean_token.value());
+        }
+        if (auto const char_token = match(TokenType::Char)) {
+            return std::make_unique<CharType>(char_token.value());
+        }
+        if (auto const integer_token = match(TokenType::Integer)) {
+            return std::make_unique<IntegerType>(integer_token.value());
+        }
+        if (auto const real_token = match(TokenType::Real)) {
+            return std::make_unique<RealType>(real_token.value());
+        }
+        if (auto const string_token = match(TokenType::String)) {
+            return std::make_unique<StringType>(string_token.value());
+        }
+
         // clang-format off
         if (
             current_is_any_of(TokenType::Plus, TokenType::Minus, TokenType::CharValue, TokenType::IntegerNumber)

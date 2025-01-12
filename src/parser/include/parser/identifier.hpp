@@ -15,6 +15,10 @@ public:
         }
     }
 
+    [[nodiscard]] Token const& token() const {
+        return *m_token;
+    }
+
     [[nodiscard]] SourceLocation source_location() const override {
         return m_token->source_location();
     }
