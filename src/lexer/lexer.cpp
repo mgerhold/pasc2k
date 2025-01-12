@@ -276,14 +276,16 @@ private:
                 )
                 and not m_encountered_token_separator
             ) {
-            // clang-format off
-                auto const source_location = SourceLocation{ m_path,
-                                                             m_source,
-                                                             previous_token.source_location().m_offset
-                                                                 + previous_token.source_location().length(),
-                                                             1 };
+                auto const source_location = SourceLocation{
+                    m_path,
+                    m_source,
+                    previous_token.source_location().m_offset
+                    + previous_token.source_location().length(),
+                    1,
+                };
                 throw UnexpectedCharacter{ source_location, source_location.text().front(), "token separator" };
             }
+            // clang-format on
         }
         m_tokens.emplace_back(token);
         m_encountered_token_separator = false;
