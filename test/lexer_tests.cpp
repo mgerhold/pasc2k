@@ -79,10 +79,14 @@ GOTO IF IN LABEL MOD NIL NOT OF OR PACKED PROCEDURE PROGRAM RECORD
 REPEAT SET THEN TO TYPE UNTIL VAR WHILE WITH
 AnD aRrAy BeGiN cAsE cOnSt DiV dO dOwNtO eLsE eNd FiLe FoR fUnCtIoN
 GoTo If In LaBeL mOd NiL nOt Of Or PaCkEd PrOcEdUrE pRoGrAm ReCoRd
-RePeAt SeT tHeN tO tYpE uNtIl VaR wHiLe WiTh)"sv;
+RePeAt SeT tHeN tO tYpE uNtIl VaR wHiLe WiTh
+boolean char integer real string
+BOOLEAN CHAR INTEGER REAL STRING
+bOoLeAn ChAr InTeGeR rEaL sTrInG
+)"sv;
     auto const tokens = tokenize(source);
 
-    EXPECT_EQ(tokens.size(), 106);
+    EXPECT_EQ(tokens.size(), 121);
 
     EXPECT_EQ(tokens.at(0).type(), TokenType::And);
     EXPECT_EQ(tokens.at(1).type(), TokenType::Array);
@@ -192,7 +196,23 @@ RePeAt SeT tHeN tO tYpE uNtIl VaR wHiLe WiTh)"sv;
     EXPECT_EQ(tokens.at(103).type(), TokenType::While);
     EXPECT_EQ(tokens.at(104).type(), TokenType::With);
 
-    EXPECT_EQ(tokens.at(105).type(), TokenType::EndOfFile);
+    EXPECT_EQ(tokens.at(105).type(), TokenType::Boolean);
+    EXPECT_EQ(tokens.at(106).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(107).type(), TokenType::Integer);
+    EXPECT_EQ(tokens.at(108).type(), TokenType::Real);
+    EXPECT_EQ(tokens.at(109).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(110).type(), TokenType::Boolean);
+    EXPECT_EQ(tokens.at(111).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(112).type(), TokenType::Integer);
+    EXPECT_EQ(tokens.at(113).type(), TokenType::Real);
+    EXPECT_EQ(tokens.at(114).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(115).type(), TokenType::Boolean);
+    EXPECT_EQ(tokens.at(116).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(117).type(), TokenType::Integer);
+    EXPECT_EQ(tokens.at(118).type(), TokenType::Real);
+    EXPECT_EQ(tokens.at(119).type(), TokenType::String);
+
+    EXPECT_EQ(tokens.at(120).type(), TokenType::EndOfFile);
 }
 
 TEST(LexerTests, Identifiers_TokenizesCorrectly) {
@@ -251,7 +271,7 @@ TEST(LexerTests, InvalidCharacter_Throws) {
 }
 
 TEST(LexerTests, Numbers_TokenizesCorrectly) {
-    static constexpr auto source = "1e10 1 +100 -0.1 5e-3 87.35E+8"sv;
+    static constexpr auto source = "1e10 1 100 0.1 5e-3 87.35E+8"sv;
     auto const tokens = tokenize(source);
 
     EXPECT_EQ(tokens.size(), 7);
@@ -261,9 +281,9 @@ TEST(LexerTests, Numbers_TokenizesCorrectly) {
     EXPECT_EQ(tokens.at(1).type(), TokenType::IntegerNumber);
     EXPECT_EQ(tokens.at(1).lexeme(), "1");
     EXPECT_EQ(tokens.at(2).type(), TokenType::IntegerNumber);
-    EXPECT_EQ(tokens.at(2).lexeme(), "+100");
+    EXPECT_EQ(tokens.at(2).lexeme(), "100");
     EXPECT_EQ(tokens.at(3).type(), TokenType::RealNumber);
-    EXPECT_EQ(tokens.at(3).lexeme(), "-0.1");
+    EXPECT_EQ(tokens.at(3).lexeme(), "0.1");
     EXPECT_EQ(tokens.at(4).type(), TokenType::RealNumber);
     EXPECT_EQ(tokens.at(4).lexeme(), "5e-3");
     EXPECT_EQ(tokens.at(5).type(), TokenType::RealNumber);
@@ -312,19 +332,19 @@ TEST(LexerTests, CharLiteral_TokenizesCorrectly) {
     auto const tokens = tokenize("'a' 'b' '!' '_' ' ' '@' ''''");
     EXPECT_EQ(tokens.size(), 8);
 
-    EXPECT_EQ(tokens.at(0).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(0).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(0).lexeme(), "'a'");
-    EXPECT_EQ(tokens.at(1).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(1).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(1).lexeme(), "'b'");
-    EXPECT_EQ(tokens.at(2).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(2).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(2).lexeme(), "'!'");
-    EXPECT_EQ(tokens.at(3).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(3).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(3).lexeme(), "'_'");
-    EXPECT_EQ(tokens.at(4).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(4).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(4).lexeme(), "' '");
-    EXPECT_EQ(tokens.at(5).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(5).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(5).lexeme(), "'@'");
-    EXPECT_EQ(tokens.at(6).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(6).type(), TokenType::CharValue);
     EXPECT_EQ(tokens.at(6).lexeme(), "''''");
 
     EXPECT_EQ(tokens.at(7).type(), TokenType::EndOfFile);
@@ -348,13 +368,13 @@ TEST(LexerTests, StringLiteral_TokenizesCorrectly) {
     auto const tokens = tokenize("'Abc' 'Pascal' 'THIS IS A STRING' 'The name is ''Pascal''!'");
     EXPECT_EQ(tokens.size(), 5);
 
-    EXPECT_EQ(tokens.at(0).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(0).type(), TokenType::StringValue);
     EXPECT_EQ(tokens.at(0).lexeme(), "'Abc'");
-    EXPECT_EQ(tokens.at(1).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(1).type(), TokenType::StringValue);
     EXPECT_EQ(tokens.at(1).lexeme(), "'Pascal'");
-    EXPECT_EQ(tokens.at(2).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(2).type(), TokenType::StringValue);
     EXPECT_EQ(tokens.at(2).lexeme(), "'THIS IS A STRING'");
-    EXPECT_EQ(tokens.at(3).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(3).type(), TokenType::StringValue);
     EXPECT_EQ(tokens.at(3).lexeme(), "'The name is ''Pascal''!'");
 
     EXPECT_EQ(tokens.at(4).type(), TokenType::EndOfFile);
@@ -438,23 +458,23 @@ end.)"sv;
 
     EXPECT_EQ(tokens.at(1).type(), TokenType::Identifier);
     EXPECT_EQ(tokens.at(1).lexeme(), "writeln");
-    EXPECT_EQ(tokens.at(1).source_location().position(), SourceLocation::Position(2, 5, 2, 11));
+    EXPECT_EQ(tokens.at(1).source_location().position(), SourceLocation::Position(2, 5, 2, 12));
     EXPECT_EQ(tokens.at(1).source_location().length(), 7);
 
     EXPECT_EQ(tokens.at(2).type(), TokenType::LeftParenthesis);
-    EXPECT_EQ(tokens.at(2).source_location().position(), SourceLocation::Position(2, 12, 2, 12));
+    EXPECT_EQ(tokens.at(2).source_location().position(), SourceLocation::Position(2, 12, 2, 13));
     EXPECT_EQ(tokens.at(2).source_location().length(), 1);
 
-    EXPECT_EQ(tokens.at(3).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(3).type(), TokenType::StringValue);
     EXPECT_EQ(tokens.at(3).source_location().position(), SourceLocation::Position(2, 13, 2, 28));
     EXPECT_EQ(tokens.at(3).source_location().length(), 15);
 
     EXPECT_EQ(tokens.at(4).type(), TokenType::RightParenthesis);
-    EXPECT_EQ(tokens.at(4).source_location().position(), SourceLocation::Position(2, 28, 2, 28));
+    EXPECT_EQ(tokens.at(4).source_location().position(), SourceLocation::Position(2, 28, 2, 29));
     EXPECT_EQ(tokens.at(4).source_location().length(), 1);
 
     EXPECT_EQ(tokens.at(5).type(), TokenType::Semicolon);
-    EXPECT_EQ(tokens.at(5).source_location().position(), SourceLocation::Position(2, 29, 2, 29));
+    EXPECT_EQ(tokens.at(5).source_location().position(), SourceLocation::Position(2, 29, 2, 30));
     EXPECT_EQ(tokens.at(5).source_location().length(), 1);
 
     EXPECT_EQ(tokens.at(6).type(), TokenType::End);
@@ -462,6 +482,6 @@ end.)"sv;
     EXPECT_EQ(tokens.at(6).source_location().length(), 3);
 
     EXPECT_EQ(tokens.at(7).type(), TokenType::Dot);
-    EXPECT_EQ(tokens.at(7).source_location().position(), SourceLocation::Position(3, 4, 3, 4));
+    EXPECT_EQ(tokens.at(7).source_location().position(), SourceLocation::Position(3, 4, 3, 5));
     EXPECT_EQ(tokens.at(7).source_location().length(), 1);
 }
