@@ -73,7 +73,7 @@ private:
             };
         };
 
-        auto definitions = std::vector<std::unique_ptr<ConstantDefinition>>{};
+        auto definitions = std::vector<ConstantDefinition>{};
         definitions.push_back(constant_definition(create_notes));
         expect(TokenType::Semicolon, "Expected semicolon after constant definition.", create_notes());
         while (current_is(TokenType::Identifier)) {
@@ -83,12 +83,14 @@ private:
         return ConstantDefinitions{ const_token, std::move(definitions) };
     }
 
-    [[nodiscard]] std::unique_ptr<ConstantDefinition> constant_definition(auto const& create_notes) {
+    [[nodiscard]] ConstantDefinition constant_definition(auto const& create_notes) {
         auto const& identifier =
             expect(TokenType::Identifier, "Expected identifier in constant definition.", create_notes());
-
         expect(TokenType::Equals, "Expected equals sign in constant definition.", create_notes());
+        return ConstantDefinition{ Identifier{ identifier }, constant(create_notes) };
+    }
 
+    [[nodiscard]] std::unique_ptr<Constant> constant(auto const& create_notes) {
         auto const sign = [&]() -> tl::optional<Token const&> {
             if (auto const plus_token = match(TokenType::Plus)) {
                 return plus_token.value();
@@ -115,20 +117,20 @@ private:
         }
 
         if (auto const integer_token = match(TokenType::IntegerNumber)) {
-            return std::make_unique<IntegerConstant>(identifier, sign, IntegerLiteral{ integer_token.value() });
+            return std::make_unique<IntegerConstant>(sign, IntegerLiteral{ integer_token.value() });
         }
         if (auto const real_token = match(TokenType::RealNumber)) {
-            return std::make_unique<RealConstant>(identifier, sign, RealLiteral{ real_token.value() });
+            return std::make_unique<RealConstant>(sign, RealLiteral{ real_token.value() });
         }
         if (auto const identifier_token = match(TokenType::Identifier)) {
-            return std::make_unique<ConstantReference>(identifier, sign, identifier_token.value());
+            return std::make_unique<ConstantReference>(sign, identifier_token.value());
         }
 
         if (auto const char_token = match(TokenType::Char)) {
-            return std::make_unique<CharConstant>(identifier, CharLiteral{ char_token.value() });
+            return std::make_unique<CharConstant>(CharLiteral{ char_token.value() });
         }
         if (auto const string_token = match(TokenType::String)) {
-            return std::make_unique<StringConstant>(identifier, StringLiteral{ string_token.value() });
+            return std::make_unique<StringConstant>(StringLiteral{ string_token.value() });
         }
 
         throw ParserError{

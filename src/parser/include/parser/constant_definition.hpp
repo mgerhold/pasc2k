@@ -6,41 +6,52 @@
 #include <tl/optional.hpp>
 #include <variant>
 #include "ast_node.hpp"
+#include "identifier.hpp"
 #include "literals.hpp"
 
-class ConstantDefinition : public AstNode {
-protected:
-    Token const* m_identifier;
+class Constant : public AstNode {};
 
+class ConstantDefinition final : public AstNode {
 protected:
-    [[nodiscard]] explicit ConstantDefinition(Token const& identifier)
-        : m_identifier{ &identifier } {}
+    Identifier m_identifier;
+    std::unique_ptr<Constant> m_constant;
+
+public:
+    [[nodiscard]] explicit ConstantDefinition(Identifier const& identifier, std::unique_ptr<Constant> constant)
+        : m_identifier{ identifier }, m_constant{ std::move(constant) } {}
 
 public:
     [[nodiscard]] SourceLocation source_location() const override {
-        return m_identifier->source_location();
+        return m_identifier.source_location().join(m_constant->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        print_ast_node(context, "ConstantDefinition");
+        context.begin_children(false);
+        m_identifier.print(context);
+        m_constant->print(context);
+        context.end_children();
     }
 };
 
-class IntegerConstant final : public ConstantDefinition {
+class IntegerConstant final : public Constant {
 private:
     tl::optional<Token const&> m_sign;
     IntegerLiteral m_integer_literal;
 
 public:
-    [[nodiscard]] explicit IntegerConstant(
-        Token const& identifier,
-        tl::optional<Token const&> const& sign,
-        IntegerLiteral const& integer_literal
-    )
-        : ConstantDefinition{ identifier }, m_sign{ sign }, m_integer_literal{ integer_literal } {}
+    [[nodiscard]] explicit IntegerConstant(tl::optional<Token const&> const& sign, IntegerLiteral const& integer_literal)
+        : m_sign{ sign }, m_integer_literal{ integer_literal } {}
 
     [[nodiscard]] IntegerLiteral const& integer_literal() const {
         return m_integer_literal;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return ConstantDefinition::source_location().join(integer_literal().source_location());
+        if (m_sign.has_value()) {
+            return m_sign.value().source_location().join(integer_literal().source_location());
+        }
+        return integer_literal().source_location();
     }
 
     void print(PrintContext& context) const override {
@@ -55,25 +66,24 @@ public:
     }
 };
 
-class RealConstant final : public ConstantDefinition {
+class RealConstant final : public Constant {
 private:
     tl::optional<Token const&> m_sign;
     RealLiteral m_real_literal;
 
 public:
-    [[nodiscard]] explicit RealConstant(
-        Token const& identifier,
-        tl::optional<Token const&> const& sign,
-        RealLiteral const& real_literal
-    )
-        : ConstantDefinition{ identifier }, m_sign{ sign }, m_real_literal{ real_literal } {}
+    [[nodiscard]] explicit RealConstant(tl::optional<Token const&> const& sign, RealLiteral const& real_literal)
+        : m_sign{ sign }, m_real_literal{ real_literal } {}
 
     [[nodiscard]] RealLiteral const& real_literal() const {
         return m_real_literal;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return ConstantDefinition::source_location().join(real_literal().source_location());
+        if (m_sign.has_value()) {
+            return m_sign.value().source_location().join(real_literal().source_location());
+        }
+        return real_literal().source_location();
     }
 
     void print(PrintContext& context) const override {
@@ -88,20 +98,20 @@ public:
     }
 };
 
-class CharConstant final : public ConstantDefinition {
+class CharConstant final : public Constant {
 private:
     CharLiteral m_char_literal;
 
 public:
-    [[nodiscard]] explicit CharConstant(Token const& identifier, CharLiteral const& char_literal)
-        : ConstantDefinition{ identifier }, m_char_literal{ char_literal } {}
+    [[nodiscard]] explicit CharConstant(CharLiteral const& char_literal)
+        : m_char_literal{ char_literal } {}
 
     [[nodiscard]] CharLiteral const& char_literal() const {
         return m_char_literal;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return ConstantDefinition::source_location().join(char_literal().source_location());
+        return char_literal().source_location();
     }
 
     void print(PrintContext& context) const override {
@@ -112,20 +122,20 @@ public:
     }
 };
 
-class StringConstant final : public ConstantDefinition {
+class StringConstant final : public Constant {
 private:
     StringLiteral m_string_literal;
 
 public:
-    [[nodiscard]] explicit StringConstant(Token const& identifier, StringLiteral const& string_literal)
-        : ConstantDefinition{ identifier }, m_string_literal{ string_literal } {}
+    [[nodiscard]] explicit StringConstant(StringLiteral const& string_literal)
+        : m_string_literal{ string_literal } {}
 
     [[nodiscard]] StringLiteral const& string_literal() const {
         return m_string_literal;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return ConstantDefinition::source_location().join(string_literal().source_location());
+        return string_literal().source_location();
     }
 
     void print(PrintContext& context) const override {
@@ -136,18 +146,14 @@ public:
     }
 };
 
-class ConstantReference final : public ConstantDefinition {
+class ConstantReference final : public Constant {
 private:
     tl::optional<Token const&> m_sign;
     Token const* m_referenced_constant;
 
 public:
-    [[nodiscard]] explicit ConstantReference(
-        Token const& identifier,
-        tl::optional<Token const&> const& sign,
-        Token const& referenced_constant
-    )
-        : ConstantDefinition{ identifier }, m_sign{ sign }, m_referenced_constant{ &referenced_constant } {}
+    [[nodiscard]] explicit ConstantReference(tl::optional<Token const&> const& sign, Token const& referenced_constant)
+        : m_sign{ sign }, m_referenced_constant{ &referenced_constant } {}
 
     [[nodiscard]] tl::optional<Token const&> const& sign() const {
         return m_sign;
@@ -158,7 +164,10 @@ public:
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return ConstantDefinition::source_location().join(referenced_constant().source_location());
+        if (m_sign.has_value()) {
+            return m_sign.value().source_location().join(referenced_constant().source_location());
+        }
+        return referenced_constant().source_location();
     }
 
     void print(PrintContext& context) const override {
