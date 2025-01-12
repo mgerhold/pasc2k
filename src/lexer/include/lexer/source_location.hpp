@@ -88,12 +88,6 @@ public:
     }
 
     [[nodiscard]] std::vector<std::string_view> surrounding_lines() const {
-        /*auto line_start = usize{ 0 };
-        for (auto offset = usize{ 0 }; offset < m_offset; ++offset) {
-            if (m_source.at(offset) == '\n') {
-                line_start = offset + 1;
-            }
-        }*/
         auto line_start = m_offset;
         while (line_start > 0 and m_source.at(line_start - 1) != '\n') {
             --line_start;
@@ -101,15 +95,21 @@ public:
 
         auto lines = std::vector<std::string_view>{};
 
-        for (auto offset = m_offset; offset < std::min(m_source.size(), m_offset + m_length); ++offset) {
+        auto offset = usize{ 0 };
+        for (offset = m_offset; offset < std::min(m_source.size(), m_offset + m_length); ++offset) {
             if (m_source.at(offset) == '\n') {
                 lines.emplace_back(m_source.cbegin() + line_start, m_source.cbegin() + offset);
                 line_start = offset + 1;
             }
         }
-        if (line_start < m_source.size()) {
-            lines.emplace_back(m_source.cbegin() + line_start, m_source.cend());
+
+        for (; offset < m_source.size(); ++offset) {
+            if (m_source.at(offset) == '\n') {
+                lines.emplace_back(m_source.cbegin() + line_start, m_source.cbegin() + offset);
+                break;
+            }
         }
+
         return lines;
     }
 };

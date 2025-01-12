@@ -18,27 +18,38 @@ static void format_source_location_to(std::ostream& stream, SourceLocation const
 
 static void format_line_to(std::ostream& stream, SourceLocation const& source_location, bool const use_color) {
     auto const [start_line, start_column, end_line, end_column] = source_location.position();
-    if (use_color) {
-        set_text_color(TextColor::White);
+    auto remaining_length = source_location.length();
+
+    for (auto const [i, line] : std::views::enumerate(source_location.surrounding_lines())) {
+        auto const line_number = start_line + static_cast<usize>(i);
+        auto const column = i == 0 ? start_column : 1;
+        if (use_color) {
+            set_text_color(TextColor::White);
+        }
+        std::print(stream, "{:5}", line_number);
+        if (use_color) {
+            reset_colors();
+        }
+        std::println(stream, " | {}", line);
+        std::print(stream, "      |");
+        if (use_color) {
+            set_text_color(TextColor::Green);
+        }
+        if (i == 0) {
+            std::print(stream, "{:>{}}^", "", column);
+        } else {
+            std::print(stream, "{:>{}}~", "", column);
+        }
+        if (remaining_length > 1) {
+            auto const squiggly_length = std::min(remaining_length, line.length());
+            std::print(stream, "{:~>{}}", "", squiggly_length - 1);
+            remaining_length -= squiggly_length;
+        }
+        if (use_color) {
+            reset_colors();
+        }
+        std::print("\n");
     }
-    std::print(stream, "{:5}", start_line);
-    if (use_color) {
-        reset_colors();
-    }
-    // TODO: Handle multiple lines.
-    std::println(stream, " | {}", source_location.surrounding_lines().front());
-    std::print(stream, "      |");
-    if (use_color) {
-        set_text_color(TextColor::Green);
-    }
-    std::print(stream, "{:>{}}^", "", start_column);
-    if (source_location.length() > 1) {
-        std::print(stream, "{:~>{}}", "", source_location.length() - 1);
-    }
-    if (use_color) {
-        reset_colors();
-    }
-    std::print("\n");
 }
 
 [[nodiscard]] static TextColor color(DiagnosticsType const type) {
