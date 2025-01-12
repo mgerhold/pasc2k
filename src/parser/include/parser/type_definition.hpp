@@ -41,7 +41,7 @@ public:
     void print(PrintContext& context) const override {
         print_ast_node(
             context,
-            "TypeAlias",
+            "TypeAliasDefinition",
             std::format("'{}'", identifier().lexeme()),
             std::format("'{}'", referenced_type()->lexeme())
         );
@@ -81,7 +81,7 @@ public:
     void print(PrintContext& context) const override {
         print_ast_node(
             context,
-            "EnumeratedType",
+            "EnumeratedTypeDefinition",
             std::format("'{}'", identifier().lexeme()),
             std::format(
                 "({})",
