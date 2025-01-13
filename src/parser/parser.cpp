@@ -187,9 +187,6 @@ private:
         if (auto const real_token = match(TokenType::Real)) {
             return std::make_unique<RealType>(real_token.value());
         }
-        if (auto const string_token = match(TokenType::String)) {
-            return std::make_unique<StringType>(string_token.value());
-        }
         return ordinal_type(create_notes);
     }
 

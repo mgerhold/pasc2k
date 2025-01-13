@@ -85,7 +85,6 @@ enum class TokenType {
     Char,
     Integer,
     Real,
-    String,
 
     EndOfFile,
 };

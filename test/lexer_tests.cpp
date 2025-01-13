@@ -80,13 +80,13 @@ REPEAT SET THEN TO TYPE UNTIL VAR WHILE WITH
 AnD aRrAy BeGiN cAsE cOnSt DiV dO dOwNtO eLsE eNd FiLe FoR fUnCtIoN
 GoTo If In LaBeL mOd NiL nOt Of Or PaCkEd PrOcEdUrE pRoGrAm ReCoRd
 RePeAt SeT tHeN tO tYpE uNtIl VaR wHiLe WiTh
-boolean char integer real string
-BOOLEAN CHAR INTEGER REAL STRING
-bOoLeAn ChAr InTeGeR rEaL sTrInG
+boolean char integer real
+BOOLEAN CHAR INTEGER REAL
+bOoLeAn ChAr InTeGeR rEaL
 )"sv;
     auto const tokens = tokenize(source);
 
-    EXPECT_EQ(tokens.size(), 121);
+    EXPECT_EQ(tokens.size(), 118);
 
     EXPECT_EQ(tokens.at(0).type(), TokenType::And);
     EXPECT_EQ(tokens.at(1).type(), TokenType::Array);
@@ -200,19 +200,16 @@ bOoLeAn ChAr InTeGeR rEaL sTrInG
     EXPECT_EQ(tokens.at(106).type(), TokenType::Char);
     EXPECT_EQ(tokens.at(107).type(), TokenType::Integer);
     EXPECT_EQ(tokens.at(108).type(), TokenType::Real);
-    EXPECT_EQ(tokens.at(109).type(), TokenType::String);
-    EXPECT_EQ(tokens.at(110).type(), TokenType::Boolean);
-    EXPECT_EQ(tokens.at(111).type(), TokenType::Char);
-    EXPECT_EQ(tokens.at(112).type(), TokenType::Integer);
-    EXPECT_EQ(tokens.at(113).type(), TokenType::Real);
-    EXPECT_EQ(tokens.at(114).type(), TokenType::String);
-    EXPECT_EQ(tokens.at(115).type(), TokenType::Boolean);
-    EXPECT_EQ(tokens.at(116).type(), TokenType::Char);
-    EXPECT_EQ(tokens.at(117).type(), TokenType::Integer);
-    EXPECT_EQ(tokens.at(118).type(), TokenType::Real);
-    EXPECT_EQ(tokens.at(119).type(), TokenType::String);
+    EXPECT_EQ(tokens.at(109).type(), TokenType::Boolean);
+    EXPECT_EQ(tokens.at(110).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(111).type(), TokenType::Integer);
+    EXPECT_EQ(tokens.at(112).type(), TokenType::Real);
+    EXPECT_EQ(tokens.at(113).type(), TokenType::Boolean);
+    EXPECT_EQ(tokens.at(114).type(), TokenType::Char);
+    EXPECT_EQ(tokens.at(115).type(), TokenType::Integer);
+    EXPECT_EQ(tokens.at(116).type(), TokenType::Real);
 
-    EXPECT_EQ(tokens.at(120).type(), TokenType::EndOfFile);
+    EXPECT_EQ(tokens.at(117).type(), TokenType::EndOfFile);
 }
 
 TEST(LexerTests, Identifiers_TokenizesCorrectly) {

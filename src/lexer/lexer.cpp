@@ -434,8 +434,6 @@ private:
             emit_token(TokenType::Real, start, m_index - start);
         } else if (equals_case_insensitive(lexeme, "CHAR")) {
             emit_token(TokenType::Char, start, m_index - start);
-        } else if (equals_case_insensitive(lexeme, "STRING")) {
-            emit_token(TokenType::String, start, m_index - start);
         } else {
             emit_token(TokenType::Identifier, start, m_index - start);
         }
@@ -548,7 +546,6 @@ private:
             case TokenType::Char:
             case TokenType::Integer:
             case TokenType::Real:
-            case TokenType::String:
                 return false;
         }
         throw InternalCompilerError{ "Unknown TokenType" };

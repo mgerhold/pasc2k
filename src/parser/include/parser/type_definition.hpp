@@ -38,12 +38,6 @@ public:
         : BuiltInType{ token, "RealType" } {}
 };
 
-class StringType final : public detail::BuiltInType<Type, TokenType::String> {
-public:
-    [[nodiscard]] explicit StringType(Token const& token)
-        : BuiltInType{ token, "StringType" } {}
-};
-
 class OrdinalType : public Type {};
 
 class BooleanType final : public detail::BuiltInType<OrdinalType, TokenType::Boolean> {
