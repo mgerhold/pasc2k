@@ -283,18 +283,23 @@ private:
     [[nodiscard]] std::unique_ptr<EnumeratedTypeDefinition> enumerated_type_definition(auto const& create_notes) {
         auto const& left_parenthesis =
             expect(TokenType::LeftParenthesis, "Expected `(` in enumerated type definition.", create_notes());
-        auto identifiers = std::vector<Identifier>{};
-        identifiers.emplace_back(
-            expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
-        );
-        while (match(TokenType::Comma)) {
-            identifiers.emplace_back(
-                expect(TokenType::Identifier, "Expected identifier in enumerated type definition.", create_notes())
-            );
-        }
+        auto identifiers = identifier_list(create_notes);
         auto const& right_parenthesis =
             expect(TokenType::RightParenthesis, "Expected `)` in enumerated type definition.", create_notes());
         return std::make_unique<EnumeratedTypeDefinition>(left_parenthesis, std::move(identifiers), right_parenthesis);
+    }
+
+    [[nodiscard]] std::vector<Identifier> identifier_list(auto const& create_notes) {
+        auto identifiers = std::vector<Identifier>{};
+        identifiers.emplace_back(
+            expect(TokenType::Identifier, "Expected identifier.", create_notes())
+        );
+        while (match(TokenType::Comma)) {
+            identifiers.emplace_back(
+                expect(TokenType::Identifier, "Expected identifier.", create_notes())
+            );
+        }
+        return identifiers;
     }
 
     [[nodiscard]] bool is_at_end() const {
