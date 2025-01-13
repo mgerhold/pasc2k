@@ -5,6 +5,17 @@
 #include <print>
 #include <vector>
 
+template<typename T, typename Contained>
+concept IsOptional = requires(T&& t) {
+    { t.has_value() } -> std::same_as<bool>;
+    { t.value() } -> std::convertible_to<Contained>;
+};
+
+class AstNode;
+
+template<typename T>
+concept PrintableChild = std::derived_from<T, AstNode> or IsOptional<T, AstNode const&>;
+
 class AstNode {
 public:
     AstNode() = default;
@@ -33,16 +44,38 @@ public:
             std::print("\n");
         }
 
-        void print_children(std::derived_from<AstNode> auto const&... children) {
+        void print_children(PrintableChild auto const&... children) {
             auto vector = std::vector<AstNode const*>{};
-            vector.reserve(sizeof...(children));
-            (vector.push_back(&children), ...);
+
+            // clang-format off
+            ([&] {
+                if constexpr (IsOptional<decltype(children), AstNode const&>) {
+                    if (children.has_value()) {
+                        vector.push_back(static_cast<AstNode const*>(&children.value()));
+                    }
+                } else {
+                    vector.push_back(&children);
+                }
+            }(), ...);
+            // clang-format on
             print_children(vector);
+        }
+
+        template<std::derived_from<AstNode> T>
+        void print_children(std::vector<T> const& children) {
+            using std::views::transform, std::views::filter, std::ranges::to;
+            // clang-format off
+            print_children(
+                children
+                    | transform([](auto const& child) { return static_cast<AstNode const*>(&child); })
+                    | to<std::vector>()
+            );
+            // clang-format on
         }
 
         void print_children(std::vector<AstNode const*> const children) {
             if (children.empty()) {
-                throw std::invalid_argument{ "Children must not be empty." };
+                return;
             }
 
             begin_children(children.size() == 1);

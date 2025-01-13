@@ -68,7 +68,7 @@ public:
 
     void print(PrintContext& context) const override {
         context.print(*this, "Block");
-        auto children = std::vector<AstNode const*>{};
+        /*auto children = std::vector<AstNode const*>{};
         if (m_label_declarations.has_value()) {
             children.push_back(&m_label_declarations.value());
         }
@@ -78,6 +78,7 @@ public:
         if (m_type_definitions.has_value()) {
             children.push_back(&m_type_definitions.value());
         }
-        context.print_children(children);
+        context.print_children(children);*/
+        context.print_children(m_label_declarations, m_constant_definitions, m_type_definitions);
     }
 };

@@ -32,3 +32,10 @@ type
     Array6 = array [Boolean, 1..10] of array [size] of real;
     Array7 = packed array [1..10, 1..8] of boolean;
     Array8 = packed array [1..10] of packed array[1..8] of boolean;
+    MyRecord = record
+        bla, test, blubb, LUL: record
+            schmalesBrett: array [1..10] of real;
+            myRange: RangeThatDoesNotExist;
+        end;
+        xyz: Rush;
+    end;

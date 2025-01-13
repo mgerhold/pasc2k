@@ -103,23 +103,15 @@ public:
     }
 };
 
-class EnumeratedTypeDefinition final : public OrdinalType {
+class IdentifierList final : public AstNode {
 private:
-    Token const* m_left_parenthesis;
     std::vector<Identifier> m_identifiers;
-    Token const* m_right_parenthesis;
 
 public:
-    [[nodiscard]] explicit EnumeratedTypeDefinition(
-        Token const& left_parenthesis,
-        std::vector<Identifier> identifiers,
-        Token const& right_parenthesis
-    )
-        : m_left_parenthesis{ &left_parenthesis },
-          m_identifiers{ std::move(identifiers) },
-          m_right_parenthesis{ &right_parenthesis } {
+    [[nodiscard]] explicit IdentifierList(std::vector<Identifier> identifiers)
+        : m_identifiers{ std::move(identifiers) } {
         if (m_identifiers.empty()) {
-            throw InternalCompilerError{ "EnumeratedTypeDefinition must have at least one identifier." };
+            throw InternalCompilerError{ "IdentifierList must have at least one identifier." };
         }
     }
 
@@ -128,12 +120,12 @@ public:
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
-        return m_left_parenthesis->source_location().join(m_right_parenthesis->source_location());
+        return m_identifiers.front().source_location().join(m_identifiers.back().source_location());
     }
 
     void print(PrintContext& context) const override {
         using std::views::transform, std::ranges::to;
-        context.print(*this, "EnumeratedTypeDefinition");
+        context.print(*this, "IdentifierList");
         // clang-format off
         context.print_children(
             m_identifiers
@@ -141,6 +133,36 @@ public:
                 | to<std::vector>()
         );
         // clang-format on
+    }
+};
+
+class EnumeratedTypeDefinition final : public OrdinalType {
+private:
+    Token const* m_left_parenthesis;
+    IdentifierList m_identifiers;
+    Token const* m_right_parenthesis;
+
+public:
+    [[nodiscard]] explicit EnumeratedTypeDefinition(
+        Token const& left_parenthesis,
+        IdentifierList identifiers,
+        Token const& right_parenthesis
+    )
+        : m_left_parenthesis{ &left_parenthesis },
+          m_identifiers{ std::move(identifiers) },
+          m_right_parenthesis{ &right_parenthesis } {}
+
+    [[nodiscard]] IdentifierList const& identifiers() const {
+        return m_identifiers;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_left_parenthesis->source_location().join(m_right_parenthesis->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "EnumeratedTypeDefinition");
+        context.print_children(m_identifiers);
     }
 };
 
@@ -239,9 +261,96 @@ public:
     }
 };
 
-/*class RecordTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+class RecordSection final : public AstNode {
+private:
+    IdentifierList m_identifiers;
+    std::unique_ptr<Type> m_type;
 
-class SetTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+public:
+    [[nodiscard]] explicit RecordSection(IdentifierList identifiers, std::unique_ptr<Type> type)
+        : m_identifiers{ std::move(identifiers) }, m_type{ std::move(type) } {}
+
+    [[nodiscard]] IdentifierList const& identifiers() const {
+        return m_identifiers;
+    }
+
+    [[nodiscard]] Type const& type() const {
+        return *m_type;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_identifiers.source_location().join(m_type->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "RecordSection");
+        context.print_children(m_identifiers, *m_type);
+    }
+};
+
+class RecordFixedPart final : public AstNode {
+private:
+    std::vector<RecordSection> m_record_sections;
+
+public:
+    [[nodiscard]] explicit RecordFixedPart(std::vector<RecordSection> record_sections)
+        : m_record_sections{ std::move(record_sections) } {
+        if (m_record_sections.empty()) {
+            throw InternalCompilerError{ "RecordFixedPart must have at least one record section." };
+        }
+    }
+
+    [[nodiscard]] std::vector<RecordSection> const& record_sections() const {
+        return m_record_sections;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_record_sections.front().source_location().join(m_record_sections.back().source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "RecordFixedPart");
+        context.print_children(m_record_sections);
+    }
+};
+
+class RecordTypeDefinition final : public UnpackedStructuredTypeDefinition {
+private:
+    Token const* m_record;
+    tl::optional<RecordFixedPart> m_fixed_part;
+    // TODO: Variant part.
+    Token const* m_end;
+
+public:
+    [[nodiscard]] explicit RecordTypeDefinition(
+        Token const& record,
+        tl::optional<RecordFixedPart> fixed_part,
+        Token const& end
+    )
+        : m_record{ &record }, m_fixed_part{ std::move(fixed_part) }, m_end{ &end } {}
+
+    [[nodiscard]] Token const& record() const {
+        return *m_record;
+    }
+
+    [[nodiscard]] tl::optional<RecordFixedPart const&> fixed_part() const {
+        if (m_fixed_part.has_value()) {
+            return m_fixed_part.value();
+        }
+        return tl::nullopt;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_record->source_location().join(m_end->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "RecordTypeDefinition");
+        context.print_children(m_fixed_part);
+    }
+};
+
+/*class SetTypeDefinition final : public UnpackedStructuredTypeDefinition {};
 
 class FileTypeDefinition final : public UnpackedStructuredTypeDefinition {};
 */

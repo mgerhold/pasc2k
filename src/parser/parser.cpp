@@ -22,22 +22,25 @@ public:
     [[nodiscard]] Ast parse() & = delete;
 
     [[nodiscard]] Ast parse() && {
+        auto block = this->block();
+        expect(TokenType::EndOfFile, "Expected end of file.");
+        return Ast{ std::move(m_tokens), std::move(block) };
+    }
+
+private:
+    [[nodiscard]] Block block() {
         auto label_declarations =
             current_is(TokenType::Label) ? std::optional{ this->label_declarations() } : std::nullopt;
         auto constant_definitions =
             current_is(TokenType::Const) ? std::optional{ this->constant_definitions() } : std::nullopt;
         auto type_definitions = current_is(TokenType::Type) ? std::optional{ this->type_definitions() } : std::nullopt;
-        return Ast{
-            std::move(m_tokens),
-            Block{
-                  std::move(label_declarations),
-                  std::move(constant_definitions),
-                  std::move(type_definitions),
-                  }
+        return Block{
+            std::move(label_declarations),
+            std::move(constant_definitions),
+            std::move(type_definitions),
         };
     }
 
-private:
     [[nodiscard]] LabelDeclarations label_declarations() {
         auto const& label_token = expect(TokenType::Label, "Expected label.");
 
@@ -201,10 +204,10 @@ private:
         if (auto const array = match(TokenType::Array)) {
             return std::make_unique<ArrayTypeDefinition>(array_type_definition(array.value(), create_notes));
         }
-        /*if (auto const record = match(TokenType::Record)) {
-            return record_type_definition(create_notes);
+        if (auto const record = match(TokenType::Record)) {
+            return std::make_unique<RecordTypeDefinition>(record_type_definition(record.value(), create_notes));
         }
-        if (auto const set = match(TokenType::Set)) {
+        /*if (auto const set = match(TokenType::Set)) {
             return set_type_definition(create_notes);
         }
         if (auto const file = match(TokenType::File)) {
@@ -228,6 +231,34 @@ private:
         expect(TokenType::Of, "Expected `of` in array type definition.", create_notes());
         auto element_type = type(create_notes);
         return ArrayTypeDefinition{ array_token, std::move(index_types), std::move(element_type) };
+    }
+
+    [[nodiscard]] RecordTypeDefinition record_type_definition(Token const& record_token, auto const& create_notes) {
+        if (auto const end = match(TokenType::End)) {
+            return RecordTypeDefinition{ record_token, tl::nullopt, end.value() };
+        }
+        // TODO: Variant part, if current token is `CASE`.
+        auto fixed_part = record_fixed_part(create_notes);
+        std::ignore = match(TokenType::Semicolon);
+        auto const& end_token = expect(TokenType::End, "Expected `end`.", create_notes());
+        return RecordTypeDefinition{ record_token, std::move(fixed_part), end_token };
+    }
+
+    [[nodiscard]] RecordFixedPart record_fixed_part(auto const& create_notes) {
+        auto record_sections = std::vector<RecordSection>{};
+        record_sections.push_back(record_section(create_notes));
+        while (continues_with(TokenType::Semicolon, TokenType::Identifier)) {
+            std::ignore = match(TokenType::Semicolon);
+            record_sections.push_back(record_section(create_notes));
+        }
+        return RecordFixedPart{ std::move(record_sections) };
+    }
+
+    [[nodiscard]] RecordSection record_section(auto const& create_notes) {
+        auto identifiers = identifier_list(create_notes);
+        expect(TokenType::Colon, "Expected `:` in record section.", create_notes());
+        auto type = this->type(create_notes);
+        return RecordSection{ std::move(identifiers), std::move(type) };
     }
 
     [[nodiscard]] std::unique_ptr<OrdinalType> ordinal_type(auto const& create_notes) {
@@ -289,17 +320,13 @@ private:
         return std::make_unique<EnumeratedTypeDefinition>(left_parenthesis, std::move(identifiers), right_parenthesis);
     }
 
-    [[nodiscard]] std::vector<Identifier> identifier_list(auto const& create_notes) {
+    [[nodiscard]] IdentifierList identifier_list(auto const& create_notes) {
         auto identifiers = std::vector<Identifier>{};
-        identifiers.emplace_back(
-            expect(TokenType::Identifier, "Expected identifier.", create_notes())
-        );
+        identifiers.emplace_back(expect(TokenType::Identifier, "Expected identifier.", create_notes()));
         while (match(TokenType::Comma)) {
-            identifiers.emplace_back(
-                expect(TokenType::Identifier, "Expected identifier.", create_notes())
-            );
+            identifiers.emplace_back(expect(TokenType::Identifier, "Expected identifier.", create_notes()));
         }
-        return identifiers;
+        return IdentifierList{ std::move(identifiers) };
     }
 
     [[nodiscard]] bool is_at_end() const {
