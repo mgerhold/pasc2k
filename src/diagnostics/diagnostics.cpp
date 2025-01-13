@@ -109,7 +109,7 @@ void format_error_to(std::ostream& stream, std::exception const& error, bool con
             DiagnosticsType::Error,
             use_color
         );
-        for (auto const& note : parser_error->notes()) {
+        for (auto const& note : parser_error->notes() | std::views::reverse) {
             format_to_with_source_location(stream, note.message(), note.source_location(), DiagnosticsType::Note, use_color);
         }
     } else {
