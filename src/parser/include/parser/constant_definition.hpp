@@ -37,7 +37,8 @@ private:
     IntegerLiteral m_integer_literal;
 
 public:
-    [[nodiscard]] explicit IntegerConstant(tl::optional<Token const&> const& sign, IntegerLiteral const& integer_literal)
+    template<std::same_as<Token const> T>
+    [[nodiscard]] explicit IntegerConstant(tl::optional<T&> const& sign, IntegerLiteral const& integer_literal)
         : m_sign{ sign }, m_integer_literal{ integer_literal } {}
 
     [[nodiscard]] IntegerLiteral const& integer_literal() const {
@@ -67,7 +68,8 @@ private:
     RealLiteral m_real_literal;
 
 public:
-    [[nodiscard]] explicit RealConstant(tl::optional<Token const&> const& sign, RealLiteral const& real_literal)
+    template<std::same_as<Token const> T>
+    [[nodiscard]] explicit RealConstant(tl::optional<T&> const& sign, RealLiteral const& real_literal)
         : m_sign{ sign }, m_real_literal{ real_literal } {}
 
     [[nodiscard]] RealLiteral const& real_literal() const {
@@ -141,8 +143,11 @@ private:
     Token const* m_referenced_constant;
 
 public:
-    [[nodiscard]] explicit ConstantReference(tl::optional<Token const&> const& sign, Token const& referenced_constant)
-        : m_sign{ sign }, m_referenced_constant{ &referenced_constant } {}
+    template<std::same_as<Token const> T>
+    [[nodiscard]] explicit ConstantReference(
+        tl::optional<T&> const& sign,
+        std::same_as<Token const> auto& referenced_constant
+    ) : m_sign{ sign }, m_referenced_constant{ &referenced_constant } {}
 
     [[nodiscard]] tl::optional<Token const&> const& sign() const {
         return m_sign;

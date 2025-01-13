@@ -11,7 +11,7 @@ private:
     i64 m_value;
 
 public:
-    [[nodiscard]] explicit IntegerLiteral(Token const& integer_token)
+    [[nodiscard]] explicit IntegerLiteral(std::same_as<Token const> auto& integer_token)
         : m_integer_token{ &integer_token } {
         auto const parsed = c2k::parse<i64>(integer_token.lexeme());
         if (not parsed.has_value()) {
@@ -39,7 +39,7 @@ private:
     double m_value;
 
 public:
-    [[nodiscard]] explicit RealLiteral(Token const& real_token)
+    [[nodiscard]] explicit RealLiteral(std::same_as<Token const> auto& real_token)
         : m_real_token{ &real_token } {
         auto stream = std::istringstream{ std::string{ real_token.lexeme() } };
         auto result = 0.0;
@@ -69,7 +69,7 @@ private:
     char m_value;
 
 public:
-    [[nodiscard]] explicit CharLiteral(Token const& char_token)
+    [[nodiscard]] explicit CharLiteral(std::same_as<Token const> auto& char_token)
         : m_char_token{ &char_token } {
         if (char_token.lexeme().length() > 3) {
             if (char_token.lexeme().at(1) != '\'' or char_token.lexeme().at(2) != '\''
@@ -104,7 +104,7 @@ private:
     std::string m_value;
 
 public:
-    explicit StringLiteral(Token const& string_token)
+    explicit StringLiteral(std::same_as<Token const> auto& string_token)
         : m_string_token{ &string_token } {
         auto result = std::string{};
         auto const lexeme = string_token.lexeme();

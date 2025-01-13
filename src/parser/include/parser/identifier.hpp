@@ -8,7 +8,7 @@ private:
     Token const* m_token;
 
 public:
-    [[nodiscard]] explicit Identifier(Token const& token)
+    [[nodiscard]] explicit Identifier(std::same_as<Token const> auto& token)
         : m_token{ &token } {
         if (token.type() != TokenType::Identifier) {
             throw InternalCompilerError{ "Expected identifier token." };

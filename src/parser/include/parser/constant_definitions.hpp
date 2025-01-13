@@ -11,8 +11,10 @@ private:
     std::vector<ConstantDefinition> m_constant_definitions;
 
 public:
-    [[nodiscard]] explicit ConstantDefinitions(Token const& const_token, std::vector<ConstantDefinition> constant_definitions)
-        : m_const_token{ &const_token }, m_constant_definitions{ std::move(constant_definitions) } {
+    [[nodiscard]] explicit ConstantDefinitions(
+        std::same_as<Token const> auto& const_token,
+        std::vector<ConstantDefinition> constant_definitions
+    ) : m_const_token{ &const_token }, m_constant_definitions{ std::move(constant_definitions) } {
         if (m_constant_definitions.empty()) {
             throw InternalCompilerError{ "Empty constant definitions." };
         }

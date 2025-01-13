@@ -13,7 +13,7 @@ private:
 
 public:
     [[nodiscard]] explicit TypeDefinitions(
-        Token const& type_token,
+        std::same_as<Token const> auto& type_token,
         std::vector<TypeDefinition> type_definitions
     )
         : m_type_token{ &type_token }, m_type_definitions{ std::move(type_definitions) } {

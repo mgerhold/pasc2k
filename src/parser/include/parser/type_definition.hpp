@@ -15,7 +15,7 @@ namespace detail {
         std::string_view m_ast_node_name;
 
     public:
-        [[nodiscard]] explicit BuiltInType(Token const& token, std::string_view const ast_node_name)
+        [[nodiscard]] explicit BuiltInType(std::same_as<Token const> auto& token, std::string_view const ast_node_name)
             : m_token{ &token }, m_ast_node_name{ ast_node_name } {
             if (m_token->type() != token_type) {
                 throw InternalCompilerError{ "Invalid token type for built-in type." };
@@ -144,9 +144,9 @@ private:
 
 public:
     [[nodiscard]] explicit EnumeratedTypeDefinition(
-        Token const& left_parenthesis,
+        std::same_as<Token const> auto& left_parenthesis,
         IdentifierList identifiers,
-        Token const& right_parenthesis
+        std::same_as<Token const> auto& right_parenthesis
     )
         : m_left_parenthesis{ &left_parenthesis },
           m_identifiers{ std::move(identifiers) },
@@ -201,8 +201,9 @@ private:
     std::unique_ptr<UnpackedStructuredTypeDefinition> m_unpacked_structured_type_definition;
 
 public:
+    template<std::same_as<Token const> T>
     [[nodiscard]] explicit StructuredTypeDefinition(
-        tl::optional<Token const&> const& packed,
+        tl::optional<T&> const& packed,
         std::unique_ptr<UnpackedStructuredTypeDefinition> unpacked_structured_type_definition
     )
         : m_packed{ packed }, m_unpacked_structured_type_definition{ std::move(unpacked_structured_type_definition) } {}
@@ -232,7 +233,7 @@ private:
 
 public:
     [[nodiscard]] ArrayTypeDefinition(
-        Token const& array,
+        std::same_as<Token const> auto& array,
         std::vector<std::unique_ptr<OrdinalType>> index_types,
         std::unique_ptr<Type> component_type
     )
@@ -323,9 +324,9 @@ private:
 
 public:
     [[nodiscard]] explicit RecordTypeDefinition(
-        Token const& record,
+        std::same_as<Token const> auto& record,
         tl::optional<RecordFixedPart> fixed_part,
-        Token const& end
+        std::same_as<Token const> auto& end
     )
         : m_record{ &record }, m_fixed_part{ std::move(fixed_part) }, m_end{ &end } {}
 

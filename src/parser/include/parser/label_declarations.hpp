@@ -11,8 +11,10 @@ private:
     std::vector<LabelDeclaration> m_label_declarations;
 
 public:
-    [[nodiscard]] explicit LabelDeclarations(Token const& label_token, std::vector<LabelDeclaration> label_declarations)
-        : m_label_token{ &label_token }, m_label_declarations{ std::move(label_declarations) } {
+    [[nodiscard]] explicit LabelDeclarations(
+        std::same_as<Token const> auto& label_token,
+        std::vector<LabelDeclaration> label_declarations
+    ) : m_label_token{ &label_token }, m_label_declarations{ std::move(label_declarations) } {
         if (m_label_declarations.empty()) {
             throw InternalCompilerError{ "Empty label declarations." };
         }

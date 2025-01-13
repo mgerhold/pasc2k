@@ -126,7 +126,7 @@ private:
             return std::make_unique<RealConstant>(sign, RealLiteral{ real_token.value() });
         }
         if (auto const identifier_token = match(TokenType::Identifier)) {
-            return std::make_unique<ConstantReference>(sign, identifier_token.value());
+            return std::make_unique<ConstantReference>(identifier_token, identifier_token.value());
         }
 
         if (auto const char_token = match(TokenType::CharValue)) {
