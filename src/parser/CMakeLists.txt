@@ -14,6 +14,7 @@ add_library(parser
         include/parser/constant_definitions.hpp
         include/parser/type_definitions.hpp
         include/parser/identifier.hpp
+        type_definition.cpp
 )
 
 target_include_directories(parser PUBLIC include)

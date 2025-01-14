@@ -33,9 +33,20 @@ type
     Array7 = packed array [1..10, 1..8] of boolean;
     Array8 = packed array [1..10] of packed array[1..8] of boolean;
     MyRecord = record
-        bla, test, blubb, LUL: record
-            schmalesBrett: array [1..10] of real;
-            myRange: RangeThatDoesNotExist;
-        end;
-        xyz: Rush;
+        a: integer;
+        case isCool: boolean of
+            true, 1, 2: (b: real);
+            false: ();
+            'test': ();
+    end;
+    TPerson = record
+        name: array[1..100] of char;
+        case hobby: THobby of
+            None: ();
+            Tennis: (
+                favoriteCourt: array[1..100] of char;
+                case rating: integer of
+                    0, 1, 2, 3: (textual: array[1..100] of char);
+                    4, 5, 6: ();
+            );
     end;

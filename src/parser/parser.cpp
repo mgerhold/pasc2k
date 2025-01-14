@@ -123,7 +123,7 @@ private:
             return std::make_unique<RealConstant>(sign, RealLiteral{ real_token.value() });
         }
         if (auto const identifier_token = match(TokenType::Identifier)) {
-            return std::make_unique<ConstantReference>(identifier_token, identifier_token.value());
+            return std::make_unique<ConstantReference>(sign, identifier_token.value());
         }
 
         if (auto const char_token = match(TokenType::CharValue)) {
@@ -221,21 +221,102 @@ private:
         if (auto const end = match(TokenType::End)) {
             return RecordTypeDefinition{ record_token, tl::nullopt, end.value() };
         }
-        // TODO: Variant part, if current token is `CASE`.
-        auto fixed_part = record_fixed_part();
-        std::ignore = match(TokenType::Semicolon);
-        auto const& end_token = expect(TokenType::End, "Expected `end`.");
-        return RecordTypeDefinition{ record_token, FieldList{ std::move(fixed_part) }, end_token };
+
+        auto field_list = this->field_list();
+        auto const& end = expect(TokenType::End, "Expected `end`.");
+        return RecordTypeDefinition{
+            record_token,
+            std::move(field_list),
+            end,
+        };
     }
 
-    [[nodiscard]] RecordFixedPart record_fixed_part() {
+    [[nodiscard]] FieldList field_list() {
+        auto fixed_part = tl::optional<FixedPart>{};
+        auto variant_part = tl::optional<VariantPart>{};
+
+        if (current_is(TokenType::Identifier)) {
+            fixed_part = record_fixed_part();
+            if (continues_with(TokenType::Semicolon, TokenType::Case)) {
+                expect(TokenType::Semicolon, "Expected `;`.");  // Should never fail.
+                auto const& case_ = expect(TokenType::Case, "Expected `case`.");  // Should never fail.
+                variant_part = this->variant_part(case_);
+            }
+        } else if (auto const case_ = match(TokenType::Case)) {
+            variant_part = this->variant_part(case_.value());
+        } else {
+            throw_parser_error("Expected field list.", current().source_location());
+        }
+
+        std::ignore = match(TokenType::Semicolon);
+
+        return FieldList{ std::move(fixed_part), std::move(variant_part) };
+    }
+
+    [[nodiscard]] VariantPart variant_part(std::same_as<Token const> auto& case_token) {
+        auto variant_selector = this->variant_selector();
+        expect(TokenType::Of, "Expected `of`.");
+        auto variant_list = this->variant_list();
+        return VariantPart{ case_token, std::move(variant_selector), std::move(variant_list) };
+    }
+
+    [[nodiscard]] VariantSelector variant_selector() {
+        auto tag_field = tl::optional<Identifier>{};
+        if (continues_with(TokenType::Identifier, TokenType::Colon)) {
+            // The next two lines should never fail.
+            tag_field.emplace(expect(TokenType::Identifier, "Expected identifier."));
+            expect(TokenType::Colon, "Expected `:`.");
+        }
+        auto tag_type = ordinal_type();
+        return VariantSelector{ std::move(tag_field), std::move(tag_type) };
+    }
+
+    [[nodiscard]] VariantList variant_list() {
+        auto list = std::vector<Variant>{};
+        list.push_back(variant());
+        while (match(TokenType::Semicolon) and current_is_none_of(TokenType::End, TokenType::RightParenthesis)) {
+            list.push_back(variant());
+        }
+        return VariantList{ std::move(list) };
+    }
+
+    [[nodiscard]] Variant variant() {
+        auto case_constant_list = this->case_constant_list();
+        expect(TokenType::Colon, "Expected `:`.");
+        expect(TokenType::LeftParenthesis, "Expected `(`.");
+        if (auto const& closing_parenthesis = match(TokenType::RightParenthesis)) {
+            return Variant{
+                std::move(case_constant_list),
+                tl::nullopt,
+                closing_parenthesis.value(),
+            };
+        }
+        auto field_list = this->field_list();
+        auto const& closing_parenthesis = expect(TokenType::RightParenthesis, "Expected `)`.");
+        return Variant{
+            std::move(case_constant_list),
+            std::make_unique<FieldList>(std::move(field_list)),
+            closing_parenthesis,
+        };
+    }
+
+    [[nodiscard]] CaseConstantList case_constant_list() {
+        auto constants = std::vector<std::unique_ptr<Constant>>{};
+        constants.push_back(constant());
+        while (match(TokenType::Comma)) {
+            constants.push_back(constant());
+        }
+        return CaseConstantList{ std::move(constants) };
+    }
+
+    [[nodiscard]] FixedPart record_fixed_part() {
         auto record_sections = std::vector<RecordSection>{};
         record_sections.push_back(record_section());
         while (continues_with(TokenType::Semicolon, TokenType::Identifier)) {
             std::ignore = match(TokenType::Semicolon);
             record_sections.push_back(record_section());
         }
-        return RecordFixedPart{ std::move(record_sections) };
+        return FixedPart{ std::move(record_sections) };
     }
 
     [[nodiscard]] RecordSection record_section() {
@@ -333,6 +414,10 @@ private:
 
     [[nodiscard]] bool current_is_any_of(std::same_as<TokenType> auto const... types) const {
         return ((current().type() == types) or ...);
+    }
+
+    [[nodiscard]] bool current_is_none_of(std::same_as<TokenType> auto const... types) const {
+        return not current_is_any_of(types...);
     }
 
     [[nodiscard]] bool continues_with(std::same_as<TokenType> auto const... types) const {

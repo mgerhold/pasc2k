@@ -4,6 +4,7 @@
 #include <lib2k/types.hpp>
 #include <print>
 #include <vector>
+#include <tl/optional.hpp>
 
 class AstNode;
 
@@ -134,10 +135,12 @@ template<MaybeAstNode... Nodes>
     // clang-format off
     ([&] {
         if constexpr (IsOptional<Nodes, AstNode const&>) {
-            if (result.has_value()) {
-                result = result.value().join(nodes.value().source_location());
-            } else {
-                result = nodes.value().source_location();
+            if (nodes.has_value()) {
+                if (result.has_value()) {
+                    result = result.value().join(nodes.value().source_location());
+                } else {
+                    result = nodes.value().source_location();
+                }
             }
         } else {
             if (result.has_value()) {
