@@ -225,7 +225,7 @@ private:
         auto fixed_part = record_fixed_part();
         std::ignore = match(TokenType::Semicolon);
         auto const& end_token = expect(TokenType::End, "Expected `end`.");
-        return RecordTypeDefinition{ record_token, std::move(fixed_part), end_token };
+        return RecordTypeDefinition{ record_token, FieldList{ std::move(fixed_part) }, end_token };
     }
 
     [[nodiscard]] RecordFixedPart record_fixed_part() {

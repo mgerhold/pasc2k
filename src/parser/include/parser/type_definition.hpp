@@ -315,30 +315,49 @@ public:
     }
 };
 
+class FieldList final : public AstNode {
+private:
+    tl::optional<RecordFixedPart> m_fixed_part;
+    // TODO: Variant part.
+
+public:
+    [[nodiscard]] explicit FieldList(tl::optional<RecordFixedPart> fixed_part)
+        : m_fixed_part{ std::move(fixed_part) } {}
+
+    [[nodiscard]] tl::optional<RecordFixedPart> const& fixed_part() const {
+        return m_fixed_part;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return join_source_locations(m_fixed_part);
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "FieldList");
+        context.print_children(m_fixed_part);
+    }
+};
+
 class RecordTypeDefinition final : public UnpackedStructuredTypeDefinition {
 private:
     Token const* m_record;
-    tl::optional<RecordFixedPart> m_fixed_part;
-    // TODO: Variant part.
+    tl::optional<FieldList> m_field_list;
     Token const* m_end;
 
 public:
     [[nodiscard]] explicit RecordTypeDefinition(
         std::same_as<Token const> auto& record,
-        tl::optional<RecordFixedPart> fixed_part,
+        tl::optional<FieldList> field_list,
         std::same_as<Token const> auto& end
     )
-        : m_record{ &record }, m_fixed_part{ std::move(fixed_part) }, m_end{ &end } {}
+        : m_record{ &record }, m_field_list{ std::move(field_list) }, m_end{ &end } {}
 
     [[nodiscard]] Token const& record() const {
         return *m_record;
     }
 
-    [[nodiscard]] tl::optional<RecordFixedPart const&> fixed_part() const {
-        if (m_fixed_part.has_value()) {
-            return m_fixed_part.value();
-        }
-        return tl::nullopt;
+    [[nodiscard]] tl::optional<FieldList> const& field_list() const {
+        return m_field_list;
     }
 
     [[nodiscard]] SourceLocation source_location() const override {
@@ -347,7 +366,7 @@ public:
 
     void print(PrintContext& context) const override {
         context.print(*this, "RecordTypeDefinition");
-        context.print_children(m_fixed_part);
+        context.print_children(m_field_list);
     }
 };
 

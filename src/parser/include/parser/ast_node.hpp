@@ -8,7 +8,7 @@
 class AstNode;
 
 template<typename T>
-concept PrintableChild = std::derived_from<T, AstNode> or IsOptional<T, AstNode const&>;
+concept MaybeAstNode = std::derived_from<T, AstNode> or IsOptional<T, AstNode const&>;
 
 class AstNode {
 public:
@@ -38,7 +38,7 @@ public:
             std::print("\n");
         }
 
-        void print_children(PrintableChild auto const&... children) {
+        void print_children(MaybeAstNode auto const&... children) {
             auto vector = std::vector<AstNode const*>{};
 
             // clang-format off
@@ -127,3 +127,29 @@ public:
 
     virtual void print(PrintContext& context) const = 0;
 };
+
+template<MaybeAstNode... Nodes>
+[[nodiscard]] SourceLocation join_source_locations(Nodes const&... nodes) {
+    auto result = tl::optional<SourceLocation>{};
+    // clang-format off
+    ([&] {
+        if constexpr (IsOptional<Nodes, AstNode const&>) {
+            if (result.has_value()) {
+                result = result.value().join(nodes.value().source_location());
+            } else {
+                result = nodes.value().source_location();
+            }
+        } else {
+            if (result.has_value()) {
+                result = result.value().join(nodes.source_location());
+            } else {
+                result = nodes.source_location();
+            }
+        }
+    }(), ...);
+    // clang-format on
+    if (not result.has_value()) {
+        throw InternalCompilerError{ "Expected at least one source location." };
+    }
+    return result.value();
+}
