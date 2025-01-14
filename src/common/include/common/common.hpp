@@ -8,6 +8,12 @@
 #include <string_view>
 #include <vector>
 
+template<typename T, typename Contained>
+concept IsOptional = requires(T&& t) {
+    { t.has_value() } -> std::same_as<bool>;
+    { t.value() } -> std::convertible_to<Contained>;
+};
+
 class InternalCompilerError final : public std::runtime_error {
 public:
     [[nodiscard]] explicit InternalCompilerError(std::string const& message)

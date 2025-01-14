@@ -5,12 +5,6 @@
 #include <print>
 #include <vector>
 
-template<typename T, typename Contained>
-concept IsOptional = requires(T&& t) {
-    { t.has_value() } -> std::same_as<bool>;
-    { t.value() } -> std::convertible_to<Contained>;
-};
-
 class AstNode;
 
 template<typename T>
