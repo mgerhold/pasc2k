@@ -39,6 +39,10 @@ type
             false: ();
             'test': ();
     end;
+    myWonderfulSet = set of integer;
+    setTest = set of 1..10;
+    anotherSet = set of Colors;
+    suit = packed set of (club, diamond, heart, spade);
     TPerson = record
         name: array[1..100] of char;
         case hobby: THobby of

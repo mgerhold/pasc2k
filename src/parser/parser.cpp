@@ -198,12 +198,11 @@ private:
         if (auto const record = match(TokenType::Record)) {
             return std::make_unique<RecordTypeDefinition>(record_type_definition(record.value()));
         }
-        /*if (auto const set = match(TokenType::Set)) {
-            return set_type_definition(create_notes);
+        if (auto const set = match(TokenType::Set)) {
+            return std::make_unique<SetTypeDefinition>(set_type_definition(set.value()));
         }
-        if (auto const file = match(TokenType::File)) {
-            return file_type_definition(create_notes);
-        }*/
+        // TODO: File types.
+        // TODO: Pointer types.
         throw_parser_error("Expected structured type definition.", current().source_location());
     }
 
@@ -232,6 +231,12 @@ private:
             std::move(field_list),
             end,
         };
+    }
+
+    [[nodiscard]] SetTypeDefinition set_type_definition(std::same_as<Token const> auto& set_token) {
+        expect(TokenType::Of, "Expected `of` in set type definition.");
+        auto base_type = ordinal_type();
+        return SetTypeDefinition{ set_token, std::move(base_type) };
     }
 
     [[nodiscard]] VariableDeclarations variable_declarations() {

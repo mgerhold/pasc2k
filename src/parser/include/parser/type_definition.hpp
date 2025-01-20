@@ -510,7 +510,28 @@ public:
     }
 };
 
-/*class SetTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+class SetTypeDefinition final : public UnpackedStructuredTypeDefinition {
+private:
+    Token const* m_set;
+    std::unique_ptr<OrdinalType> m_base_type;
 
-class FileTypeDefinition final : public UnpackedStructuredTypeDefinition {};
-*/
+public:
+    [[nodiscard]] explicit SetTypeDefinition(std::same_as<Token const> auto& set, std::unique_ptr<OrdinalType>&& base_type)
+        : m_set{ &set }, m_base_type{ std::move(base_type) } {}
+
+    [[nodiscard]] OrdinalType const& base_type() const {
+        return *m_base_type;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_set->source_location().join(m_base_type->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "SetTypeDefinition");
+        context.print_children(*m_base_type);
+    }
+};
+
+/*class FileTypeDefinition final : public UnpackedStructuredTypeDefinition {};
+ */
