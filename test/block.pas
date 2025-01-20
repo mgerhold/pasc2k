@@ -65,3 +65,4 @@ type
         end;
         k: 0..9;
         operator: (plus, minus, times);
+        m, m1, m2: array [1..10, 1..10] of real;
