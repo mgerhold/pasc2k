@@ -5,7 +5,7 @@
 #include <parser/parser.hpp>
 #include <parser/parser_note.hpp>
 #include <parser/type_definition.hpp>
-#include <sstream>
+#include <parser/variable_declarations.hpp>
 #include <tl/optional.hpp>
 
 class Parser final {
@@ -37,14 +37,17 @@ private:
 
     [[nodiscard]] Block block() {
         auto label_declarations =
-            current_is(TokenType::Label) ? std::optional{ this->label_declarations() } : std::nullopt;
+            current_is(TokenType::Label) ? tl::optional{ this->label_declarations() } : tl::nullopt;
         auto constant_definitions =
-            current_is(TokenType::Const) ? std::optional{ this->constant_definitions() } : std::nullopt;
-        auto type_definitions = current_is(TokenType::Type) ? std::optional{ this->type_definitions() } : std::nullopt;
+            current_is(TokenType::Const) ? tl::optional{ this->constant_definitions() } : tl::nullopt;
+        auto type_definitions = current_is(TokenType::Type) ? tl::optional{ this->type_definitions() } : tl::nullopt;
+        auto variable_declarations =
+            current_is(TokenType::Var) ? tl::optional{ this->variable_declarations() } : tl::nullopt;
         return Block{
             std::move(label_declarations),
             std::move(constant_definitions),
             std::move(type_definitions),
+            std::move(variable_declarations),
         };
     }
 
@@ -229,6 +232,27 @@ private:
             std::move(field_list),
             end,
         };
+    }
+
+    [[nodiscard]] VariableDeclarations variable_declarations() {
+        auto const& var_token = expect(TokenType::Var, "Expected `var`.");
+        auto declarations = std::vector<VariableDeclaration>{};
+        declarations.push_back(this->variable_declaration());
+        expect(TokenType::Semicolon, "Expected `;`.");
+
+        while (current_is(TokenType::Identifier)) {
+            declarations.push_back(this->variable_declaration());
+            expect(TokenType::Semicolon, "Expected `;`.");
+        }
+
+        return VariableDeclarations{ var_token, std::move(declarations) };
+    }
+
+    [[nodiscard]] VariableDeclaration variable_declaration() {
+        auto identifiers = identifier_list();
+        expect(TokenType::Colon, "Expected `:`.");
+        auto type = this->type();
+        return VariableDeclaration{ std::move(identifiers), std::move(type) };
     }
 
     [[nodiscard]] FieldList field_list() {

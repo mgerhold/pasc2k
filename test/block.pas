@@ -50,3 +50,18 @@ type
                     4, 5, 6: ();
             );
     end;
+    var
+        clausKleber: TPerson;
+        a, b, c: integer;
+        scientificValue: real;
+        isCool: boolean;
+        myNewlyDefinedArrayType: array[5..42] of real;
+        myNewlyDefinedRecordType: record
+            a: integer;
+            b: real;
+            case boolean of
+                true: (c: char);
+                false: ();
+        end;
+        k: 0..9;
+        operator: (plus, minus, times);
