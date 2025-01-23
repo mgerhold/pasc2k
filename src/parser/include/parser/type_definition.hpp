@@ -533,5 +533,25 @@ public:
     }
 };
 
-/*class FileTypeDefinition final : public UnpackedStructuredTypeDefinition {};
- */
+class FileTypeDefinition final : public UnpackedStructuredTypeDefinition {
+private:
+    Token const* m_file;
+    std::unique_ptr<Type> m_component_type;
+
+public:
+    [[nodiscard]] explicit FileTypeDefinition(std::same_as<Token const> auto& file, std::unique_ptr<Type>&& component_type)
+        : m_file{ &file }, m_component_type{ std::move(component_type) } {}
+
+    [[nodiscard]] Type const& component_type() const {
+        return *m_component_type;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_file->source_location().join(m_component_type->source_location());
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "FileTypeDefinition");
+        context.print_children(*m_component_type);
+    }
+};

@@ -54,19 +54,29 @@ type
                     4, 5, 6: ();
             );
     end;
-    var
-        clausKleber: TPerson;
-        a, b, c: integer;
-        scientificValue: real;
-        isCool: boolean;
-        myNewlyDefinedArrayType: array[5..42] of real;
-        myNewlyDefinedRecordType: record
-            a: integer;
-            b: real;
-            case boolean of
-                true: (c: char);
-                false: ();
-        end;
-        k: 0..9;
-        operator: (plus, minus, times);
-        m, m1, m2: array [1..10, 1..10] of real;
+    TFile = file of integer;
+var
+    clausKleber: TPerson;
+    a, b, c: integer;
+    scientificValue: real;
+    isCool: boolean;
+    myNewlyDefinedArrayType: array[5..42] of real;
+    myNewlyDefinedRecordType: record
+        a: integer;
+        b: real;
+        case boolean of
+            true: (c: char);
+            false: ();
+    end;
+    k: 0..9;
+    operator: (plus, minus, times);
+    m, m1, m2: array [1..10, 1..10] of real;
+    MyFile: file of integer;
+    ComplicatedFile: file of record
+        a: integer;
+        b: real;
+        c: char;
+        case boolean of
+            true: (d: boolean);
+            false: ();
+    end;
