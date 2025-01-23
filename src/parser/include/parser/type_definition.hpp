@@ -2,6 +2,7 @@
 
 #include <lexer/token.hpp>
 #include <memory>
+#include <variant>
 #include "ast_node.hpp"
 #include "constant_definition.hpp"
 #include "identifier_list.hpp"
@@ -553,5 +554,39 @@ public:
     void print(PrintContext& context) const override {
         context.print(*this, "FileTypeDefinition");
         context.print_children(*m_component_type);
+    }
+};
+
+class PointerTypeDefinition final : public UnpackedStructuredTypeDefinition {
+public:
+    using ReferencedType = std::variant<Identifier, IntegerType, RealType, CharType, BooleanType>;
+
+private:
+    Token const* m_up_arrow;
+    ReferencedType m_referenced_type;
+
+public:
+    [[nodiscard]] explicit PointerTypeDefinition(
+        std::same_as<Token const> auto& up_arrow,
+        ReferencedType const& referenced_type
+    )
+        : m_up_arrow{ &up_arrow }, m_referenced_type{ referenced_type } {}
+
+    [[nodiscard]] ReferencedType const& referenced_type() const {
+        return m_referenced_type;
+    }
+
+    [[nodiscard]] SourceLocation source_location() const override {
+        return m_up_arrow->source_location().join(
+            std::visit([](auto const& type) -> SourceLocation { return type.source_location(); }, m_referenced_type)
+        );
+    }
+
+    void print(PrintContext& context) const override {
+        context.print(*this, "PointerTypeDefinition");
+        context.print_children(std::visit(
+            [](auto const& type) -> AstNode const& { return type; },
+            m_referenced_type
+        ));
     }
 };

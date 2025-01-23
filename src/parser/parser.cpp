@@ -180,10 +180,34 @@ private:
         }
         // clang-format on
 
+        if (auto const up_arrow_token = match(TokenType::UpArrow)) {
+            return std::make_unique<PointerTypeDefinition>(pointer_type(up_arrow_token.value()));
+        }
+
         if (auto const real_token = match(TokenType::Real)) {
             return std::make_unique<RealType>(real_token.value());
         }
         return ordinal_type();
+    }
+
+    [[nodiscard]] PointerTypeDefinition pointer_type(std::same_as<Token const> auto& up_arrow_token) {
+        if (auto const identifier = match(TokenType::Identifier)) {
+            return PointerTypeDefinition{ up_arrow_token, Identifier{ identifier.value() } };
+        }
+        if (auto const integer = match(TokenType::Integer)) {
+            return PointerTypeDefinition{ up_arrow_token, IntegerType{ integer.value() } };
+        }
+        if (auto const real = match(TokenType::Real)) {
+            return PointerTypeDefinition{ up_arrow_token, RealType{ real.value() } };
+        }
+        if (auto const char_ = match(TokenType::Char)) {
+            return PointerTypeDefinition{ up_arrow_token, CharType{ char_.value() } };
+        }
+        if (auto const boolean = match(TokenType::Boolean)) {
+            return PointerTypeDefinition{ up_arrow_token, BooleanType{ boolean.value() } };
+        }
+
+        throw ParserError{ "Expected type reference after `^`.", up_arrow_token.source_location() };
     }
 
     [[nodiscard]] StructuredTypeDefinition structured_type_definition() {

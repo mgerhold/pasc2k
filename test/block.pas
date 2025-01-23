@@ -55,6 +55,8 @@ type
             );
     end;
     TFile = file of integer;
+    PFile = ^TFile;
+    PInteger = @integer;
 var
     clausKleber: TPerson;
     a, b, c: integer;
@@ -80,3 +82,8 @@ var
             true: (d: boolean);
             false: ();
     end;
+    myPointer: ^integer;
+    myPointer: ^real;
+    myPointer: ^boolean;
+    myPointer: ^char;
+    myFilePointer: @ComplicatedFile;
