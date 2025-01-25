@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <lib2k/types.hpp>
 #include <ranges>
@@ -40,6 +41,8 @@ public:
     }
     return std::ranges::all_of(std::views::zip(lhs, rhs), [](auto const& pair) {
         auto const [left, right] = pair;
+        assert(is_ascii(left));
+        assert(is_ascii(right));
         auto const left_upper = static_cast<char>(std::toupper(left));
         auto const right_upper = static_cast<char>(std::toupper(right));
         return left_upper == right_upper;
