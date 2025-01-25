@@ -8,6 +8,20 @@
 #include <string_view>
 #include <vector>
 
+[[nodiscard]] inline bool is_ascii(char const c) {
+    // If `char` is signed and therefore has a max value of 127,
+    // GCC issues a warning because the comparison is always true.
+    // Therefore, we suppress the warning here.
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+    return c >= 0 and c <= 127;
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+}
+
 template<typename T, typename Contained>
 concept IsOptional = requires(T&& t) {
     { t.has_value() } -> std::same_as<bool>;

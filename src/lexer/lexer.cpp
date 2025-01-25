@@ -237,20 +237,6 @@ private:
         return c >= '0' and c <= '9';
     }
 
-    [[nodiscard]] static bool is_ascii(char const c) {
-        // If `char` is signed and therefore has a max value of 127,
-        // GCC issues a warning because the comparison is always true.
-        // Therefore, we suppress the warning here.
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
-        return c >= 0 and c <= 127;
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-    }
-
     void emit_token(TokenType const type, usize const length = 1) {
         emit_token(type, m_index, length);
     }
